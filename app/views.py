@@ -83,7 +83,7 @@ def add_user(request):
 def validation_user(request):
     if request.method == "POST":
         try:
-            data = request.body
+            data = json.loads(request.body)
 
             id_user = data.get('idUser','')
 
