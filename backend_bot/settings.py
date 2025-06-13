@@ -1,3 +1,4 @@
+import os
 """
 Django settings for backend_bot project.
 
@@ -150,3 +151,11 @@ CSRF_COOKIE_HTTPONLY = False
 #SecretKey Mercado pago
 
 
+DEBUG = 'RENDER' not in os.environ
+# DEBUG = True  # Puedes desactivarlo luego si estás en producción
+DEBUG = False
+
+ALLOWED_HOSTS = []  
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)

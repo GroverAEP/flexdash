@@ -28,7 +28,7 @@ def recibir_dato(request):
         try:
             # Si recibes JSON:
             data = json.loads(request.body)
-            nombre = data.get('nombre', '')
+            nombre = data.get('name', '')
             edad = data.get('edad', 0)
 
             # Aquí puedes guardar en BD, procesar, etc.
@@ -48,26 +48,29 @@ def add_user(request):
     if request.method == "POST":
         try:
             # Obtener el JSON como string desde el header
-            json_header = request.headers.get("JSON")  # 👈 esto es un string
-            print(json_header)
+            # json_header = request.headers.get("JSON")  # 👈 esto es un string
+            # print(json_header)
             # Convertir de string a dict
             # json_body = request.body
             # print(json_body)
-            json_data = json.loads(json_header)
-            print("Los datos son: " + str(json_data))
-           
+            data = json.loads(request.body)
+            nombre = data.get('name','')
+            edad = data.get('edad')
+
+            # json_data = json.loads(json_header)
+            # print("Los datos son: " + str(json_data))
 
             # Insertar en Mongo
             client = connection_mongo()
             db = client['flexDash']
             collection = db['collection']
-            collection.insert_one(json_data)
+            collection.insert_one(data)
             
 
             client.close()
 
             return JsonResponse({
-                'response': str(json_data),
+                'response': str(data),
                 "title": "Datos subidos desde header a la BD"
             }, status=201)
 
