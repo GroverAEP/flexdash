@@ -99,6 +99,7 @@ def validation_user(request):
                 return JsonResponse({"response": "esta id no existe"}, status = 201)
         except Exception as e:
             return JsonResponse({'error': str(e)},status = 400)
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 def connection_mongo():
     username = "gespinoza12"
