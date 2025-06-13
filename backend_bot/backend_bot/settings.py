@@ -81,9 +81,18 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-}
+} 
 
+# DATABASES = {
+#     'default':{
+#         'ENGINE': 'djongo',
+#         'NAME':
+#     }
+# }
 
+#python -m pip install "pymongo[srv]"==3.12
+#7N38JZHgMkFp8gvK
+#mongodb+srv://gespinoza:7N38JZHgMkFp8gvK@flexdash.pqxf1mp.mongodb.net/?retryWrites=true&w=majority&appName=flexdash
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -132,3 +141,12 @@ CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
 CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "https://tu-front.com"]
 CSRF_COOKIE_SECURE = False  # True si usas HTTPS
 CSRF_COOKIE_HTTPONLY = False
+
+
+#secretKey mongo_db 
+
+
+
+#SecretKey Mercado pago
+
+

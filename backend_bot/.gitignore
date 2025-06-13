@@ -1,0 +1,48 @@
+# Entornos virtuales
+venv/
+env/
+ENV/
+*.env
+
+# Archivos de configuración/credenciales
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.sqlite3
+
+# Archivos de VS Code o editores
+.vscode/
+.idea/
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de logs y temporales
+*.log
+*.pot
+*.mo
+
+# Archivos de base de datos local
+db.sqlite3
+
+# Django static/media generados
+/static/
+media/
+
+# Archivos de migraciones
+*/migrations/__pycache__/
+*/migrations/*.pyc
+*/migrations/*.pyo
+
+# Archivos compilados
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Archivos de instalación de dependencias (si por error están en tu proyecto)
+modules/
+Lib/
+site-packages/
