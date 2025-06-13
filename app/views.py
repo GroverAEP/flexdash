@@ -79,8 +79,26 @@ def add_user(request):
 
     return JsonResponse({'error': 'Método no permitido'}, status=405)
     
+def validation_user(request):
+    if request.post == "POST":
+        try:
+            data = request.body
+
+            id_user = data.get('idUser','')
+
+            client = connection_mongo()
+
+            db = client['flexDash'],
+            collection = db['collection']
 
 
+            if collection.find_one({"idUser": id_user}):
+                
+                return JsonResponse({"response": "esta ya id existe"},status=201)
+            else:
+                return JsonResponse({"response": "esta id no existe"}, status = 201)
+        except Exception as e:
+            return JsonResponse({'error': str(e)},status = 400)
 
 def connection_mongo():
     username = "gespinoza12"

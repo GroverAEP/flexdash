@@ -8,5 +8,6 @@ urlpatterns = [
     path('get_post/', views.obtener_pots, name="post1"),
     path('recibir_data/', views.recibir_dato,name="post"),
     path('insertar_document/', views.connection_mongo, name="enviar_Dato"),
-    path('add_user/', views.add_user, name= "add_user")
+    path('add_user/', views.add_user, name= "add_user"),
+    path('validation_user/', views.validation_user, name="validation_user")
 ]
