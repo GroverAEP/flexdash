@@ -81,7 +81,7 @@ def add_user(request):
 
 @csrf_exempt
 def validation_user(request):
-    if request.post == "POST":
+    if request.method == "POST":
         try:
             data = request.body
 
