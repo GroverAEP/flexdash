@@ -78,7 +78,8 @@ def add_user(request):
             return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({'error': 'Método no permitido'}, status=405)
-    
+
+@csrf_exempt
 def validation_user(request):
     if request.post == "POST":
         try:
