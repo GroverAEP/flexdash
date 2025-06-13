@@ -55,7 +55,7 @@ def add_user(request):
             # print(json_body)
             data = json.loads(request.body)
             nombre = data.get('name','')
-            edad = data.get('edad')
+            edad = data.get('edad',0)
 
             # json_data = json.loads(json_header)
             # print("Los datos son: " + str(json_data))
@@ -77,30 +77,34 @@ def add_user(request):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    return JsonResponse({'error': f'Método no permitido : {request.method}'}, status=405)
 
 @csrf_exempt
 def validation_user(request):
+    client = connection_mongo()
     if request.method == "POST":
         try:
+            db = client['flexDash']
+            collection = db['collection']
             data = json.loads(request.body)
+            print(data)
 
             id_user = data.get('idUser','')
 
-            client = connection_mongo()
 
-            db = client['flexDash'],
-            collection = db['collection']
 
+            print(id_user)
 
             if collection.find_one({"idUser": id_user}):
                 
-                return JsonResponse({"response": "esta ya id existe"},status=201)
+
+                return JsonResponse({"response": {"text": "Esta cuenta esta registrada","value":True}},status=201)
             else:
-                return JsonResponse({"response": "esta id no existe"}, status = 201)
+                return JsonResponse({"response": {"text":"Esta cuenta no esta registrada","value":False}}, status = 201)
         except Exception as e:
             return JsonResponse({'error': str(e)},status = 400)
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    client.close()
+    return JsonResponse({'error': f'Método no permitido: {request.method}'}, status=405)
 
 def connection_mongo():
     username = "gespinoza12"

@@ -155,13 +155,16 @@ CSRF_COOKIE_HTTPONLY = False
 
 
 #SecretKey Mercado pago
-
-
+# Si estás desplegando en Render, la variable RENDER estará en el entorno.
 DEBUG = 'RENDER' not in os.environ
-# DEBUG = True  # Puedes desactivarlo luego si estás en producción
-DEBUG = False
 
-ALLOWED_HOSTS = []  
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+# Hosts permitidos en producción
+ALLOWED_HOSTS = []
+
+if not DEBUG:
+    RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    if RENDER_EXTERNAL_HOSTNAME:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+else:
+    # En local puedes permitir todo o limitarlo a localhost
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
