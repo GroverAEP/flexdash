@@ -9,5 +9,10 @@ urlpatterns = [
     path('recibir_data/', views.recibir_dato,name="post"),
     path('insertar_document/', views.connection_mongo, name="enviar_Dato"),
     path('add_user/', views.add_user, name= "add_user"),
-    path('validation_user/', views.validation_user, name="validation_user")
+    path('validation_user/', views.validation_user, name="validation_user"),
+
+
+
+    #Generar imagenes
+    path('generar_imagen/', views.generate_image, name="generate_image")   
 ]

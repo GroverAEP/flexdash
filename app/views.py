@@ -9,6 +9,22 @@ import json
 
 
 
+from PIL import Image, ImageDraw , ImageFont
+
+def generate_image(request):
+    imagen= Image.new('RGB',(1920,1080),color='white')
+
+    dibujo = ImageDraw.Draw(imagen)
+    dibujo.rectangle([0, 0, 200, 50], fill='blue', outline='black')
+    # Cargar una fuente y establecer el tamaño (por ejemplo, 30)
+    fuente = ImageFont.truetype("arial.ttf", 200)  # Cambia por otra si no tienes Arial
+
+
+    dibujo.text((10, 30), "Hola este es mi", font=fuente, fill="black")
+    imagen.save('imagen_generada.png')
+
+    return JsonResponse({'response': 'ok respuesta procesada'})
+
 
 # Create your views here.
 def obtener_pots(request):
@@ -172,6 +188,11 @@ def connection_mongo():
 
     # client.close()
     # return JsonResponse({"response": "envio de datos Exitoso"})
+    
+    #emprendedor
+    #usuario
+    #productos
+
 
 def encode_image(filename):
     with open(filename, "rb") as image_file:
