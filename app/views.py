@@ -120,12 +120,12 @@ def add_user(request):
             data = json.loads(request.body)
             
             #propiedades que obtendre del post
-            idClientChatBot = data.get('idClientChatBot','')
-            firts_name = data.get('first_name','usuario')
-            last_name = data.get('last_name','usuario')
-            email = data.get('email','')
-            phone = data.get('phone','')
-            country = data.get('country','')
+            idClientChatBot = data.get('idClientChatBot')
+            firts_name = data.get('first_name')
+            last_name = data.get('last_name')
+            email = data.get('email')
+            phone = data.get('phone')
+            country = data.get('country')
             uid = f"user-{datetime.now().strftime('%Y%m%d%H%M%S')}-{str(uuid.uuid4())[:6]}"
 
             #Json del servidor Serializable
@@ -163,9 +163,11 @@ def add_user(request):
             }, status=201)
 
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            return JsonResponse({
+                                'status': 400
+                ,'error': str(e)}, status=400)
 
-    return JsonResponse({'error': f'Método no permitido : {request.method}'}, status=405)
+    return JsonResponse({'status': 405,'error': f'Método no permitido : {request.method}'}, status=405)
 
 @csrf_exempt
 def validation_user(request):
