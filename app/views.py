@@ -51,9 +51,15 @@ class BDConnection():
         return client
 
 
+def get_error(request):
+    return JsonResponse({
+        'error': 'Este endpoint siempre falla.',
+        'code': 'FORCED_ERROR'
+    }, status=400)  # o 500 si quieres un error de servidor
 
 def get_json_test(request): 
-    print(data)
+    # print(data)
+    data = {}
     return JsonResponse(data)
 
 

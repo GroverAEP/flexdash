@@ -22,6 +22,7 @@ urlpatterns = [
 
     
     #Test
+    path('get_error/', views.get_error, name="get_error"),
     path('post_json_test', views.obtener_post_pagina, name="postTest"),
     path('get_json_test', views.get_json_test, name="get_json_test" )
 ]
