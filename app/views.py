@@ -16,14 +16,14 @@ from django.conf import settings
 
 
 from django.core import serializers
-from .models import Client
+# from .models import Client
 
 #importacion de dependecias utils
 from datetime import datetime
 import uuid
 
-clientes = Client.objects.all()
-data = serializers.serialize('json',clientes)
+# clientes = Client.objects.all()
+# data = serializers.serialize('json',clientes)
 
 
 
