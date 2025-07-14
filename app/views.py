@@ -119,20 +119,29 @@ def add_user(request):
             #informacion del json enviado por el POST
             data = json.loads(request.body)
             
+            
+            
             #propiedades que obtendre del post
             idClientChatBot = data.get('idClientChatBot')
-            firts_name = data.get('first_name')
+            first_name = data.get('first_name')
             last_name = data.get('last_name')
             email = data.get('email')
             phone = data.get('phone')
             country = data.get('country')
             uid = f"user-{datetime.now().strftime('%Y%m%d%H%M%S')}-{str(uuid.uuid4())[:6]}"
 
+            # Si alguno está vacío o no viene, lanzar error
+            if not first_name or not email or not phone:
+                return JsonResponse({
+                    'status': 400,
+                    'response': "Datos incompletos o incorrectos"
+                }, status=400)
+            
             #Json del servidor Serializable
             clientSerializable = {
                 "idClient": uid,
                 "idClientChatBot": idClientChatBot,
-                "first_name": firts_name,
+                "first_name": first_name,
                 "last_name": last_name,
                 "email": email,
                 "phone": phone,
