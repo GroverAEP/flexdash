@@ -20,6 +20,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+username = "gespinoza12"
+password = "ges12"
+# MONGODB ATLAS DRIVER URL
+MONGO_ATLAS_KEY = f'mongodb+srv://{username}:{password}@flexdash.pqxf1mp.mongodb.net/?retryWrites=true&w=majority&appName=flexdash'
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-gwi*6%_1^@v%s^c_ue53lu=7v(hi(@r#h-k38b@9gt-x$w!26e'
 

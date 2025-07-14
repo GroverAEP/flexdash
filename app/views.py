@@ -1,32 +1,79 @@
 import requests
 import base64
+import certifi
+import json
+
 
 from django.shortcuts import render
 from django.http import HttpResponse , JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from pymongo import MongoClient 
-import json
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+
+from django.conf import settings
 
 
 
-from PIL import Image, ImageDraw , ImageFont
+from django.core import serializers
+from .models import Client
 
-def generate_image(request):
-    imagen= Image.new('RGB',(1920,1080),color='white')
+#importacion de dependecias utils
+from datetime import datetime
+import uuid
 
-    dibujo = ImageDraw.Draw(imagen)
-    dibujo.rectangle([0, 0, 200, 50], fill='blue', outline='black')
-    # Cargar una fuente y establecer el tamaño (por ejemplo, 30)
-    fuente = ImageFont.truetype("arial.ttf", 200)  # Cambia por otra si no tienes Arial
+clientes = Client.objects.all()
+data = serializers.serialize('json',clientes)
 
 
-    dibujo.text((10, 30), "Hola este es mi", font=fuente, fill="black")
-    imagen.save('imagen_generada.png')
 
-    return JsonResponse({'response': 'ok respuesta procesada'})
+
+
+
+
+
+
+
+
+
+class BDConnection():
+
+    #bot normal 25 - bot confuncionalidades IA 40- bot personalizable 85
+    def connection_mongo():
+
+        client = MongoClient(settings.MONGO_ATLAS_KEY, 
+                            server_api=ServerApi('1'), 
+                            tlsCAFile= certifi.where())
+
+        print(client)
+
+        print(f"conexion exitosa con {client}")
+        return client
+
+
+
+def get_json_test(request): 
+    print(data)
+    return JsonResponse(data)
 
 
 # Create your views here.
+# Vista para enviar JSON como peticion
+@csrf_exempt
+def obtener_post_pagina(request):
+    url = 'https://jsonplaceholder.typicode.com/posts'
+    data = {
+    "title": "Nuevo post",
+    "body": "Este es el contenido",
+    "userId": 1
+    }
+    
+    if request.method == 'POST':
+        response = requests.post(url,json=data)
+        return JsonResponse({"response": f"informacion enviada correctamente {response}"}, status=200)
+    else :
+        return JsonResponse({"error": "error al realizar el post"})
+    
 def obtener_pots(request):
     url = 'https://jsonplaceholder.typicode.com/posts'
     response = requests.get(url)
@@ -35,7 +82,7 @@ def obtener_pots(request):
 
         return JsonResponse(data,safe=False)
     else:
-        return JsonResponse({'error': 'Nose pudo obtener los datos'}, status =500)
+        return JsonResponse({'error': 'Nose pudo obtener los datos'}, status=500)
 
 
 def recibir_dato(request):
@@ -63,31 +110,50 @@ def recibir_dato(request):
 def add_user(request):
     if request.method == "POST":
         try:
-            # Obtener el JSON como string desde el header
-            # json_header = request.headers.get("JSON")  # 👈 esto es un string
-            # print(json_header)
-            # Convertir de string a dict
-            # json_body = request.body
-            # print(json_body)
+            #informacion del json enviado por el POST
             data = json.loads(request.body)
-            nombre = data.get('name','')
-            edad = data.get('edad',0)
+            
+            #propiedades que obtendre del post
+            idClientChatBot = data.get('idClientChatBot','')
+            firts_name = data.get('first_name','usuario')
+            last_name = data.get('last_name','usuario')
+            email = data.get('email','')
+            phone = data.get('phone','')
+            country = data.get('country','')
+            uid = f"user-{datetime.now().strftime('%Y%m%d%H%M%S')}-{str(uuid.uuid4())[:6]}"
 
+            #Json del servidor Serializable
+            clientSerializable = {
+                "idClient": uid,
+                "idClientChatBot": idClientChatBot,
+                "first_name": firts_name,
+                "last_name": last_name,
+                "email": email,
+                "phone": phone,
+                "type_business": [],
+                "country": country,
+                "date": datetime.now()
+            }
+
+            # nombre = data.get('name','')
+            
+            # edad = data.get('edad',0)
             # json_data = json.loads(json_header)
             # print("Los datos son: " + str(json_data))
 
             # Insertar en Mongo
-            client = connection_mongo()
+            client = BDConnection.connection_mongo()
             db = client['flexDash']
-            collection = db['collection']
-            collection.insert_one(data)
+            collection = db['client']
+            collection.insert_one(clientSerializable)
             
 
             client.close()
 
             return JsonResponse({
+                'status': 200,
                 'response': str(data),
-                "title": "Datos subidos desde header a la BD"
+                "title": "Datos subidos desde body a la BD"
             }, status=201)
 
         except Exception as e:
@@ -97,7 +163,7 @@ def add_user(request):
 
 @csrf_exempt
 def validation_user(request):
-    client = connection_mongo()
+    client = BDConnection.connection_mongo()
     if request.method == "POST":
         try:
             db = client['flexDash']
@@ -122,76 +188,7 @@ def validation_user(request):
     client.close()
     return JsonResponse({'error': f'Método no permitido: {request.method}'}, status=405)
 
-def connection_mongo():
-    username = "gespinoza12"
-    password = "ges12"
-    
 
-    client = MongoClient(f'mongodb+srv://{username}:{password}@flexdash.pqxf1mp.mongodb.net/?retryWrites=true&w=majority&appName=flexdash')
-
-    print(client)
-
-    print(f"conexion exitosa con {client}")
-    return client
-
-
-    # for doc in collection.find({"hobby": {"$exists" : True}}):
-    #     print(doc)
-
-
-
-    # collection.delete_many({"hobby": {"$exists": True}})
-
-
-
-
-
-
-
-    # document ={
-    #     "name": "usuario1",
-    #     "edad": 12,
-    #     "city": "SAS",
-    #     "hobby": "guitarra",
-    # }
-
-
-
-    # list_document = [
-    #     {"name": "usuario1",
-    #       "idUser": 3182947923,  
-    #      "edad": 12,
-    #      "hobby": "guitarra",},
-    #     {"name": "usuario2",
-    #      "idUser":3182944231,
-    #      "edad": 24,
-    #      "hobby": "flauta",
-    #      },
-    #     {"name": "usuario3",
-    #      "idUser": 3182944321,
-    #      "edad": 32,
-    #      "hobby": "play", 
-    #      },
-    # ]
-
-
-    # header = {
-    #     "Content-Type": "application/json",
-    # }
-
-
-    # # insertdoc =collection.insert_one(document)
-    # insertMany = collection.insert_many(list_document)
-
-    # print(f"documento insertado con exito: {list_document.index}")
-    
-
-    # client.close()
-    # return JsonResponse({"response": "envio de datos Exitoso"})
-    
-    #emprendedor
-    #usuario
-    #productos
 
 
 def encode_image(filename):

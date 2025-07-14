@@ -3,16 +3,26 @@ from django.urls import path
 from app import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('index/', views.index, name='index'),
+    #run method function 
+    #Get
     path('get_post/', views.obtener_pots, name="post1"),
+    
+    #Post
     path('recibir_data/', views.recibir_dato,name="post"),
-    path('insertar_document/', views.connection_mongo, name="enviar_Dato"),
+    # path('insertar_document/', views.connection_mongo, name="enviar_Dato"),
     path('add_user/', views.add_user, name= "add_user"),
     path('validation_user/', views.validation_user, name="validation_user"),
+    #Administracion o paginas de pruebas
+    
+    path('admin/', admin.site.urls),
+    path('index/', views.index, name='index'),
+    # path('generar_imagen/', views.generate_image, name="generate_image")   
+    
+    
 
-
-
-    #Generar imagenes
-    path('generar_imagen/', views.generate_image, name="generate_image")   
+    
+    #Test
+    path('post_json_test', views.obtener_post_pagina, name="postTest"),
+    path('get_json_test', views.get_json_test, name="get_json_test" )
 ]
+

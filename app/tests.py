@@ -7,3 +7,4 @@ class IndexViewTest(TestCase):
         response = self.client.get('/index/')  # o usa reverse('index') si tiene `name=`
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Hola a todos los que operan en este servicio")
+    
