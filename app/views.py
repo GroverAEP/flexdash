@@ -112,14 +112,19 @@ def recibir_dato(request):
     else:
         return JsonResponse({'error': 'Método no permitido'}, status=405)
 
+
+
+
+
+
+
+
 @csrf_exempt
 def add_user(request):
     if request.method == "POST":
         try:
             #informacion del json enviado por el POST
             data = json.loads(request.body)
-            
-            
             
             #propiedades que obtendre del post
             idClientChatBot = data.get('idClientChatBot')
@@ -173,28 +178,32 @@ def add_user(request):
 
         except Exception as e:
             return JsonResponse({
-                                'status': 400
+                'status': 400,
+                'response': "datos incompletos."
                 ,'error': str(e)}, status=400)
 
     return JsonResponse({'status': 405,'error': f'Método no permitido : {request.method}'}, status=405)
 
+
 @csrf_exempt
 def validation_user(request):
     client = BDConnection.connection_mongo()
-    if request.method == "POST":
+    if request.method == "GET":
         try:
             db = client['flexDash']
             collection = db['collection']
-            data = json.loads(request.body)
-            print(data)
-
-            id_user = data.get('idUser','')
+            # data = json.loads(request.body)
+            # print(data)
 
 
+            # idClientChatBot = data.get('idClientChatBot','')
 
-            print(id_user)
+            IdClientChatBot = request.GET.get('IdClientChatBot')
 
-            if collection.find_one({"idUser": id_user}):
+
+            # print(id_user)
+
+            if collection.find_one({"idUser": IdClientChatBot}):
                 
 
                 return JsonResponse({"response": {"text": "Esta cuenta esta registrada","value":True}},status=201)
