@@ -2,7 +2,7 @@
 venv/
 env/
 ENV/
-*.env
+# *.env
 
 # Archivos de configuración/credenciales
 *.pyc
