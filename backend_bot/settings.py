@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import dj_database_url
+
+from dotenv import load_dotenv
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,17 +24,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+
+load_dotenv()
 username = "gespinoza12"
 password = "ges12"
 # MONGODB ATLAS DRIVER URL
 MONGO_ATLAS_KEY = f'mongodb+srv://{username}:{password}@flexdash.pqxf1mp.mongodb.net/?retryWrites=true&w=majority&appName=flexdash'
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-gwi*6%_1^@v%s^c_ue53lu=7v(hi(@r#h-k38b@9gt-x$w!26e'
-
+SECRET_KEY='django-insecure-gwi*6%_1^@v%s^c_ue53lu=7v(hi(@r#h-k38b@9gt-x$w!26e'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
 
 
 # Application definition
@@ -44,7 +50,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     #app origin
-    'app'
+    'app',
+    'rest_framework',
+
 
 ]
 
@@ -57,6 +65,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRend  erer',
+    ]
+}
 
 ROOT_URLCONF = 'backend_bot.urls'
 
@@ -81,12 +95,27 @@ WSGI_APPLICATION = 'backend_bot.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',
+#         'USER': 'postgres.ttpnzibrbeqcxeshsoqt ',
+#         'HOST': os.environ.get("SUPABASE_HOST"),
+#         'PASSWORD': os.environ.get("SUPABASE_PASSWORD"),
+#         'PORT':"6543",
+#         'OPTIONS':{
+#             'sslmode': 'require',
+#             "sslrootcert": os.path.join(BASE_DIR,'prod-ca-2021.crt')
+#         }
+#     }}
+    
+    
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-} 
+    'default': dj_database_url.parse(os.getenv('SUPABASE_CREDENTIALS'), conn_max_age=600, ssl_require=True)
+}
+
+
+
 
 # DATABASES = {
 #     'default':{

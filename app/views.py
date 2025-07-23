@@ -1,15 +1,12 @@
 import requests
 import base64
-import certifi
 import json
-
+import os
+from datetime import datetime
 
 from django.shortcuts import render
 from django.http import HttpResponse , JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from pymongo import MongoClient 
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
 
 from django.conf import settings
 
@@ -19,37 +16,106 @@ from django.core import serializers
 # from .models import Client
 
 #importacion de dependecias utils
-from datetime import datetime
 import uuid
+from supabase import create_client
+from app.content import ClientContent ,AdminContent,FileContent
+
 
 # clientes = Client.objects.all()
 # data = serializers.serialize('json',clientes)
 
 
+supabase = create_client(os.environ.get('SUPABASE_URL'), os.environ.get('SUPABASE_KEY'))
+
+@csrf_exempt
+def upload_image_to_supabase(request):
+    if request.method == 'POST':
+        file = request.FILES.get('imagen')  # En Django, por ejemplo
+ 
+        #LAS IMAGENES NO VAN EN EL JSON (URL PUBLICAS / STR)       
+        json = FileContent.search_image_logo(supabase, idAdmin="12389283")    
+        print(json)
+        
+        if json:
+            return JsonResponse({
+                "status": 200,
+                "response": "imagen subida "   
+            })
+        return JsonResponse({
+            "status": 200,
+            "response": " imagen nosubida "   
+        })
+
+    return JsonResponse({
+        "status": 200,
+        "response": f"Metodo no valido:  {requests.method}"   
+    })
+# def get_public_url(filename):
+#     url = supabase.storage.from_(settings.SUPABASE_BUCKET).get_public_url(filename)
+#     return url['data']['publicUrl']
+
+
+# def get_signed_url(filename, expires_in=60):
+#     url = supabase.storage.from_(settings.SUPABASE_BUCKET).create_signed_url(filename, expires_in)
+#     return url['data']['signedUrl']
 
 
 
 
+# def subir_imagen_admin(file):
+
+#     admin_id = str(uuid.uuid4())
+#     filename = f"{admin_id}/catalog_business.jpg"
+#     file_content = file.read()
+
+#     try:
+#         response = supabase.storage.from_("administradores").upload(
+#             path=filename,
+#             file=file_content
+#         )
+#     except Exception as e:
+#         return {"error": str(e)}
+
+#     # Obtener URL firmada de forma correcta usando .data
+#     signed_url_data = supabase.storage.from_("administradores").create_signed_url(filename, 3600)
+#     print(signed_url_data)
+
+#     return {
+#         "admin_id": admin_id,
+#         "signed_url": signed_url_data["signedUrl"],  # ✅ FIX AQUÍ
+#         "filename": filename
+#     }
+
+
+@csrf_exempt
+def add_business():
+    
+    if requests.method == 'POST':
+        file = requests.Files['imagen']
+        
+        
+        
+        # result = upload_image_to_supabase(file)
+        # return JsonResponse(result)
+    return JsonResponse({"error": "No se envio imagen"}, status=400)
+
+#Admin
+#Business
+#Catalog
 
 
 
 
+@csrf_exempt
+def subir_catalogo_admin(request):
+    if request.method == 'POST' and 'imagen' in request.FILES:
+        file = request.FILES['imagen']
+        resultado = subir_imagen_admin(file)
+        return JsonResponse(resultado)
 
+    return JsonResponse({"error": "No se envió imagen"}, status=400)
 
-class BDConnection():
-
-    #bot normal 25 - bot confuncionalidades IA 40- bot personalizable 85
-    def connection_mongo():
-
-        client = MongoClient(settings.MONGO_ATLAS_KEY, 
-                            server_api=ServerApi('1'), 
-                            tlsCAFile= certifi.where())
-
-        print(client)
-
-        print(f"conexion exitosa con {client}")
-        return client
-
+        
 
 def get_error(request):
     return JsonResponse({
@@ -114,47 +180,91 @@ def recibir_dato(request):
 
 
 
+@csrf_exempt
+def add_catalog(request):
+    if request.method =="POST":
+        try:
+            data = json.loads(request.body)
+            
+            
+            catalog = [
+                        {
+                            "name": "Nombre",
+                            "description": "",
+                            "type": "prod - serv",
+                            "price": 0.0,
+                            "stock": 0
+                        }
+                    ],
+            return JsonResponse(
+                {   "status": 200,
+                    "response" :"Catalogo del nDatos agregados corretamente"
+                },status=200
+            )
+        except Exception as e:
+             return JsonResponse(
+                {   "status": 400,
+                    "error" : f"Error al guardar los datos: {e}"
+                },status=400
+            )
+    return JsonResponse({"status":400,"error":"Error dentro del codigo"},status=400)
 
 
 
 
 
 @csrf_exempt
-def add_user(request):
+def add_admin(request):
     if request.method == "POST":
         try:
+            data = json.loads(request.body)
+            AdminContent.add_user(data)
+            
+
+            return JsonResponse({
+            'status': 200,
+            'response': {
+                "data":str(data)
+                },
+            # "title": "Datos subidos desde body a la BD"
+        }, status=201)
+        except Exception as e:
+            return JsonResponse({
+            'status': 400,
+            'response': "datos incompletos."
+            ,'error': str(e)}, status=400)
+            
+
+
+@csrf_exempt
+def add_user(request):
+        #validacion errores
+    if request.method == "POST":
+        try:
+            
+            # imagen = request.POST.get("imagen")
+            
             #informacion del json enviado por el POST
             data = json.loads(request.body)
-            
+            # conexion_client_mongo()
             #propiedades que obtendre del post
-            idClientChatBot = data.get('idClientChatBot')
             first_name = data.get('first_name')
-            last_name = data.get('last_name')
             email = data.get('email')
             phone = data.get('phone')
-            country = data.get('country')
-            uid = f"user-{datetime.now().strftime('%Y%m%d%H%M%S')}-{str(uuid.uuid4())[:6]}"
 
+
+            follow_business = data.get('follow_business')
+            
             # Si alguno está vacío o no viene, lanzar error
             if not first_name or not email or not phone:
                 return JsonResponse({
                     'status': 400,
                     'response': "Datos incompletos o incorrectos"
                 }, status=400)
-            
-            #Json del servidor Serializable
-            clientSerializable = {
-                "idClient": uid,
-                "idClientChatBot": idClientChatBot,
-                "first_name": first_name,
-                "last_name": last_name,
-                "email": email,
-                "phone": phone,
-                "type_business": [],
-                "country": country,
-                "date": datetime.now()
-            }
 
+            ClientContent.add_user(data)
+            
+            
             # nombre = data.get('name','')
             
             # edad = data.get('edad',0)
@@ -162,14 +272,6 @@ def add_user(request):
             # print("Los datos son: " + str(json_data))
 
             # Insertar en Mongo
-            client = BDConnection.connection_mongo()
-            db = client['flexDash']
-            collection = db['client']
-            collection.insert_one(clientSerializable)
-            
-
-            client.close()
-
             return JsonResponse({
                 'status': 200,
                 'response': str(data),
@@ -187,33 +289,29 @@ def add_user(request):
 
 @csrf_exempt
 def validation_user(request):
-    client = BDConnection.connection_mongo()
     if request.method == "GET":
         try:
-            db = client['flexDash']
-            collection = db['collection']
-            # data = json.loads(request.body)
-            # print(data)
-
-
-            # idClientChatBot = data.get('idClientChatBot','')
-
-            IdClientChatBot = request.GET.get('IdClientChatBot')
-
-
-            # print(id_user)
-
-            if collection.find_one({"idUser": IdClientChatBot}):
-                
-
-                return JsonResponse({"response": {"text": "Esta cuenta esta registrada","value":True}},status=201)
+            id_client = request.GET.get('IdClientChatBot')
+            email = request.GET.get('email')
+            # if not id_client:
+            #     return JsonResponse({'error': 'Parámetro IdClientChatBot requerido'}, status=400)
+            user_exists_id = ClientContent.search_id_client()
+            
+            user_exists_email   = ClientContent.search_user_email(email)
+            if user_exists_id or user_exists_email:
+                return JsonResponse({
+                    "validate": True,
+                    "response": {"text": "Esta cuenta está registrada", "value": True}
+                }, status=200)
             else:
-                return JsonResponse({"response": {"text":"Esta cuenta no esta registrada","value":False}}, status = 201)
+                return JsonResponse({
+                    "validate": False,
+                    "response": {"text": "Esta cuenta no está registrada", "value": False}
+                }, status=200)
         except Exception as e:
-            return JsonResponse({'error': str(e)},status = 400)
-    client.close()
+            return JsonResponse({'error': str(e)}, status=500)
+      
     return JsonResponse({'error': f'Método no permitido: {request.method}'}, status=405)
-
 
 
 
@@ -237,3 +335,60 @@ def search_for_id_user():
 
 def index(request):
     return HttpResponse("Hola a todos los que operan en este servicio")
+
+
+
+import mercadopago
+
+
+sdk = mercadopago.SDK(os.environ.get('MERCADOPAGO_ACCESS_TOKEN'))
+
+@csrf_exempt
+def crear_pago(request):
+    
+    
+    preference_data = {
+        "items": [
+            {
+                "title": "Producto de prueba",
+                "quantity": 1,
+                "currency_id": "PEN",  # Moneda peruana
+                "unit_price": 50.0
+            }
+        ],
+        "back_urls": {
+            "success": "https://tusitio.com/pago-exitoso",
+            "failure": "https://tusitio.com/pago-fallido",
+            "pending": "https://tusitio.com/pago-pendiente"
+        },
+        "auto_return": "approved"
+    }
+    
+    
+
+    preference_response = sdk.preference().create(preference_data)
+    preference = preference_response["response"]
+
+    return JsonResponse(preference_response)
+
+def validation_pago():
+    {
+        
+    }
+def test_webhook_botpress():
+    url = "https://webhook.botpress.cloud/8481047b-5c05-4f41-b1df-51e31a4323e7"
+
+    payload = {
+        "type": "text",
+        "text": "texto de prueba",
+        "userId": "8481047b-5c05-4f41-b1df-51e31a4323e7",
+        "channel": "webhook"  # debe coincidir con el canal en Botpress
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    return response.status_code, response.text

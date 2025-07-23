@@ -161,3 +161,79 @@
         #emprendedor
         #usuario
         #productos
+
+
+        -----------------------------
+
+        {
+  "id": "id",
+  "full_name": "Carlos Pérez",
+  "first_name": "Carlos",
+  "last_name": "Pérez",
+  "dni": "11111111",
+  "phone": "+51928250745",
+  "email": "email@gmail.com",
+  "business": [
+    {
+      "id": "",
+      "idBot": "",
+      "name": "negocio1",
+      "category": "Peluqueria",
+      "ruc": "1123823",
+      "catalog_url": "http://",
+      "catalog": [
+        {
+          "name": "Nombre",
+          "description": "",
+          "type": "prod - serv",
+          "price": 0.0,
+          "stock": 0
+        }
+      ],
+      "description": "Lorem anata wa redo misete",
+      "coWorkers": [
+        {
+          "id": "",
+          "status": ""
+        }
+      ],
+      "address": "Av.",
+      "time_open": "13:00",
+      "time_close": "12:00",
+      "logo_url": "http://",
+      "feedback": "",
+      "method_payments": [
+        {
+          "type": "yape",
+          "name": "example",
+          "phone": "+51928250745",
+          "qrImageUrl": "http:///"
+        },
+        {
+          "type": "mercado_pago",
+          "name": "example1",
+          "lastName": "example2",
+          "email": "example@gmail.com",
+          "phone_number": "+51",
+          "account_token": "",
+          "public_key": ""
+        }
+      ],
+      "social_media": [
+        {
+          "type_social": "facebook",
+          "urlPage": "http://"
+        },
+        {
+          "type_social": "X",
+          "urlPage": "http://"
+        },
+        {
+          "type_social": "instagram",
+          "urlPage": "http://"
+        }
+      ]
+    }
+  ],
+  "date": "10/07/2024"
+}
