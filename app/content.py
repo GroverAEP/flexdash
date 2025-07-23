@@ -244,6 +244,14 @@ class ClientContent():
         conexion.close()
         return user
     
+    def search_user_phone(phone):
+        collection, conexion    =BDConnection.conexion_client_mongo()
+ 
+        user = collection.find_one({"phone": phone})
+        
+        conexion.close()
+        return user        
+    
 class FileContent():
     
     @classmethod

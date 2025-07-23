@@ -291,14 +291,16 @@ def add_user(request):
 def validation_user(request):
     if request.method == "GET":
         try:
-            id_client = request.GET.get('IdClientChatBot')
-            email = request.GET.get('email')
+            phone = request.GET.get('phone')
+            # id_client = request.GET.get('IdClientChatBot')
+            # email = request.GET.get('email')
             # if not id_client:
             #     return JsonResponse({'error': 'Parámetro IdClientChatBot requerido'}, status=400)
-            user_exists_id = ClientContent.search_id_client()
+            # user_exists_id = ClientContent.search_id_client()
             
-            user_exists_email   = ClientContent.search_user_email(email)
-            if user_exists_id or user_exists_email:
+            user_exists_phone   = ClientContent.search_user_phone(phone)
+            # if user_exists_id or user_exists_email:
+            if user_exists_phone:
                 return JsonResponse({
                     "validate": True,
                     "response": {"text": "Esta cuenta está registrada", "value": True}
