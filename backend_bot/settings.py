@@ -35,8 +35,11 @@ SECRET_KEY='django-insecure-gwi*6%_1^@v%s^c_ue53lu=7v(hi(@r#h-k38b@9gt-x$w!26e'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    '.onrender.com',  # Permite cualquier subdominio de Render
+    'localhost',
+    '127.0.0.1',
+]
 
 
 # Application definition
