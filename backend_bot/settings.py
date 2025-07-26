@@ -36,7 +36,7 @@ SECRET_KEY='django-insecure-gwi*6%_1^@v%s^c_ue53lu=7v(hi(@r#h-k38b@9gt-x$w!26e'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '.onrender.com',  # Permite cualquier subdominio de Render
+    'flexdash.onrender.com/',  # Permite cualquier subdominio de Render
     'localhost',
     '127.0.0.1',
 ]
@@ -181,7 +181,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_COOKIE_NAME = "csrftoken"
 CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
-CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "https://tu-front.com"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "https://tu-front.com","https://flexdash.onrender.com/"]
 CSRF_COOKIE_SECURE = False  # True si usas HTTPS
 CSRF_COOKIE_HTTPONLY = False
 
@@ -194,8 +194,6 @@ CSRF_COOKIE_HTTPONLY = False
 # Si estás desplegando en Render, la variable RENDER estará en el entorno.
 DEBUG = 'RENDER' not in os.environ
 
-# Hosts permitidos en producción
-ALLOWED_HOSTS = []
 
 if not DEBUG:
     RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')

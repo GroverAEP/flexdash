@@ -15,7 +15,6 @@ urlpatterns = [
     path('validation_user/', views.validation_user, name="validation_user"),
     #Administracion o paginas de pruebas
     
-    path('admin/', admin.site.urls),
     path('index/', views.index, name='index'),
     # path('generar_imagen/', views.generate_image, name="generate_image")   
     
