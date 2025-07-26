@@ -8,8 +8,8 @@ import json
 from django.http import HttpResponse , JsonResponse
 
 from decimal import Decimal
-from sentence_transformers import SentenceTransformer, util
-
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 class AdminContent():
     @classmethod
@@ -362,37 +362,27 @@ class FileContent():
     
     
     
-    
-class AiContent():
-    
-    model = SentenceTransformer("intfloat/e5-small-v2")
-
+class AiContent:
     @classmethod
     def validation_for_name(cls, user_name, catalog):
-            # ✅ E5 espera el prefijo "query: " para consultas
-            user_embedding = cls.model.encode(f"query: {user_name}", convert_to_tensor=True)
-
-            best_item = None
-            highest_score = 0.0
-
-            for item in catalog:
-                # ✅ E5 espera el prefijo "passage: " para los elementos del catálogo
-                catalog_embedding = cls.model.encode(f"passage: {item['name']}", convert_to_tensor=True)
-                similarity = util.pytorch_cos_sim(user_embedding, catalog_embedding).item()
-
-                if similarity > highest_score:
-                    highest_score = similarity
-                    best_item = item
-
-            if highest_score >= 0.6:  # Puedes ajustar este umbral según tus pruebas
-                return best_item
-            return None  
+        texts = [user_name] + [item["name"] for item in catalog]
+        vectorizer = TfidfVectorizer().fit(texts)
+        vectors = vectorizer.transform(texts)
+        user_vec = vectors[0]
+        catalog_vecs = vectors[1:]
+        sims = cosine_similarity(user_vec, catalog_vecs)[0]
+        best_idx = sims.argmax()
+        if sims[best_idx] >= 0.5:
+            return catalog[best_idx]
+        return None
         
     
     
     
-    
-    
+# class PayMethodContent():
+#     @classmethod
+#     def create_payout_mercado_pago(self,):
+#         prin
     
     
     
@@ -406,27 +396,36 @@ class CalContent():
         jsonCatalog = AdminContent.search_id_catalog(json["idBusiness"])
 
         try:
+            for item in json["listServices"]:
+                services = AiContent.validation_for_name(item["name"],jsonCatalog)
+                if services["type"] == "serv" or services:
+                    item["name"] = services["name"]
+                    item["price"] = services["price"]
+                    
+                    price_total += Decimal(services["price"]) * int(item["amount"])
+                else: 
+                    item["error"] = "objeto no econtrado"
+                print("Services - CalContent")
+                print(services) 
+                    
             for item in json["listProducts"]:
                 print(f"items: {item}")
                 # for item in jsonCatalog:
                 # result = AiContent.validation_for_name("hamburguesa",jsonCatalog)
                 product = AiContent.validation_for_name(item["name"],jsonCatalog)        
-                item["name"] = product["name"]
-                item["price"] = product["price"]
-                print(product["price"]) 
-                price_total += Decimal(product["price"]) * int(item["amount"])
-                # print(price_total)
-                # print(f"Sumando: {product['price']} x {item['amount']}")
+                if product["type"] == "prod":
+                    item["name"] = product["name"]
+                    item["price"] = product["price"]
+                    
+                    print(product["price"]) 
+                    price_total += Decimal(product["price"]) * int(item["amount"])
+                else:   
+                    item["error"] = "objeto no econtrado"
+                    # print(price_total)
+                    # print(f"Sumando: {product['price']} x {item['amount']}")
             
-            for item in json["listServices"]:
-                services = AiContent.validation_for_name(item["name"],jsonCatalog)
-                item["name"] = services["name"]
-                item["price"] = services["price"]
                 
-                price_total += Decimal(services["price"]) * int(item["amount"])
-                
-                
-                
+            print(price_total)
             
             print("print - calContent")
             json["total_price"] = str(price_total)  # Convertir Decimal a str para evitar problemas de serialización
