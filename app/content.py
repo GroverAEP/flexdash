@@ -365,26 +365,28 @@ class FileContent():
     
 class AiContent():
     
-    model = SentenceTransformer('all-MiniLM-L6-v2')  # Carga solo una vez el modelo
+    model = SentenceTransformer("intfloat/e5-small-v2")
 
     @classmethod
     def validation_for_name(cls, user_name, catalog):
-        user_embedding = cls.model.encode(user_name, convert_to_tensor=True)
+            # ✅ E5 espera el prefijo "query: " para consultas
+            user_embedding = cls.model.encode(f"query: {user_name}", convert_to_tensor=True)
 
-        best_item = None
-        highest_score = 0.0
+            best_item = None
+            highest_score = 0.0
 
-        for item in catalog:
-            catalog_embedding = cls.model.encode(item["name"], convert_to_tensor=True)
-            similarity = util.pytorch_cos_sim(user_embedding, catalog_embedding).item()
+            for item in catalog:
+                # ✅ E5 espera el prefijo "passage: " para los elementos del catálogo
+                catalog_embedding = cls.model.encode(f"passage: {item['name']}", convert_to_tensor=True)
+                similarity = util.pytorch_cos_sim(user_embedding, catalog_embedding).item()
 
-            if similarity > highest_score:
-                highest_score = similarity
-                best_item = item
+                if similarity > highest_score:
+                    highest_score = similarity
+                    best_item = item
 
-        if highest_score >= 0.6:  # Umbral de aceptación (ajustable)
-            return best_item
-        return None     
+            if highest_score >= 0.6:  # Puedes ajustar este umbral según tus pruebas
+                return best_item
+            return None  
         
     
     
