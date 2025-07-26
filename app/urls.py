@@ -29,6 +29,7 @@ urlpatterns = [
     
     path('subir_catalogo/',views.subir_catalogo_admin, name="subir_catalogo"),
     
+    path('cal_price_total/',views.cal_price_total, name="cal_price_total"),
     #Test Mercado Pago
     path('test_pago_yape_mercadopago',views.crear_pago, name="test_pago")
 ]

@@ -1,10 +1,14 @@
-from app.models import AdminUser, Business, TimeZone, MethodPayment, SocialMedia, Feedback, CoWorker,CatalogItem,ClientUser,FollowBusiness,Cart,CartPayment,Products,Catalog,CatalogImage
+from app.models import ClientUser,FollowBusiness,Cart,CartPayment,Products
+from app.models import AdminUser, Business,TimeZone,MethodPayment,SocialMedia,Feedback,CoWorker,Catalog,CatalogImage,CatalogItem
+
 from app.conexion import BDConnection
 from datetime import datetime
-from .serializers import  ClientUserSerializer,AdminUserSerializer
+from .serializers import  ClientUserSerializer,AdminUserSerializer,CatalogSerializer
 import json
+from django.http import HttpResponse , JsonResponse
 
-
+from decimal import Decimal
+from sentence_transformers import SentenceTransformer, util
 
 
 class AdminContent():
@@ -28,6 +32,10 @@ class AdminContent():
             email=serializable["email"],
         )
         
+        print(user.full_name)
+        
+        print(serializable["business"])
+        
         if "business" in serializable:
             for b in serializable.get("business"):
                 print("business")
@@ -49,29 +57,38 @@ class AdminContent():
                 print(business)  # ✅ Ahora sí existe
 
                 if "catalog" in b:
+                    bc = b["catalog"]
                     catalog = Catalog.objects.create(
                         business=business,
                     )
+                    print(catalog)
 
-                    if "catalog_images" in b["catalog"]:
-                        for catalog_image in b["catalog"]["catalog_images"]:
-                            
-                            catalog_im = CatalogImage.objects.create(
+                    # Creamos imágenes
+                    if "catalog_images" in bc:
+                        for catalog_image in bc["catalog_images"]:
+                         catalog_image_object= CatalogImage.objects.create(
                                 catalog=catalog,
                                 name=catalog_image["name"],
                                 type=catalog_image["type"],
-
+                                img_url=catalog_image["img_url"]
                             )
-                    if "catalog_items" in b["catalog"]:
-                        for catalog_items in b["catalog"]["catalog_items"]:
-                            catalog_it = CatalogItem.objects.create(
+                    # Creamos items
+                    if "catalog_items" in bc:
+                        for catalog_item in bc["catalog_items"]:
+                            print(catalog_item)
+                            print(catalog_item["price"])
+                            CatalogItem.objects.create(
                                 catalog=catalog,
-                                name=catalog_image["name"],
-                                description=catalog_image.get("description", ""),
-                                    type=catalog_image["type"],
-                                price=catalog_image["price"],
-                                stock=catalog_image["stock"]
+                                name=catalog_item["name"],
+                                description=catalog_item.get("description", ""),
+                                type=catalog_item["type"],
+                                price=catalog_item["price"],
+                                stock=catalog_item["stock"]
                             )
+
+                    # ✅ Serializamos el catálogo recién creado (con imágenes e items ya guardados)
+                    catalog_serializer = CatalogSerializer(catalog)
+                    b["catalog"] = catalog_serializer.data
 
 
                 if "method_payment" in b:
@@ -128,13 +145,52 @@ class AdminContent():
                                 time_close = tz["time_close"]
                         )
             
-        adminUserSerializer = AdminUserSerializer()
+        adminUserSerializer = AdminUserSerializer(user)
         json_data = adminUserSerializer.data
+
+        print("parte final")
+        print(json_data)
 
         collection.insert_one(json_data)
         
 
         conexion.close()
+    @classmethod
+    def search_id_catalog(cls, id):
+        collection, conexion = BDConnection.conexion_admin_mongo()
+
+        try:
+            # Buscar documento con ese ID
+            doc = collection.find_one({"id": id})
+
+            if not doc:
+                return JsonResponse({
+                    "status": 404,
+                    "message": "Documento no encontrado"
+                })
+
+            # Asegurar que 'catalog' y 'catalog_items' existan
+            catalog = doc.get("business", [])[0].get("catalog") if doc.get("business") else None
+            catalog_items = catalog.get("catalog_items") if catalog else None
+
+            print("catalog - Business")
+            print(catalog_items)
+            
+            return catalog_items
+            
+
+            # return JsonResponse({
+            #     "status": 200,
+            #     "data": catalog_items or []
+            # })
+
+
+        except Exception as e:
+            conexion.close()
+            return JsonResponse({
+                "status": 500,
+                "error": str(e)
+            })
 
 class ClientContent():
     @classmethod
@@ -303,3 +359,142 @@ class FileContent():
             return {"error": str(e)}
 
     
+    
+    
+    
+    
+class AiContent():
+    
+    model = SentenceTransformer('all-MiniLM-L6-v2')  # Carga solo una vez el modelo
+
+    @classmethod
+    def validation_for_name(cls, user_name, catalog):
+        user_embedding = cls.model.encode(user_name, convert_to_tensor=True)
+
+        best_item = None
+        highest_score = 0.0
+
+        for item in catalog:
+            catalog_embedding = cls.model.encode(item["name"], convert_to_tensor=True)
+            similarity = util.pytorch_cos_sim(user_embedding, catalog_embedding).item()
+
+            if similarity > highest_score:
+                highest_score = similarity
+                best_item = item
+
+        if highest_score >= 0.6:  # Umbral de aceptación (ajustable)
+            return best_item
+        return None     
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+class CalContent():
+    @classmethod    
+    def resave_total_price(self, json):
+        print(json["idBusiness"])
+        price_total = Decimal("0.0")
+
+        jsonCatalog = AdminContent.search_id_catalog(json["idBusiness"])
+
+        try:
+            for item in json["listProducts"]:
+                print(f"items: {item}")
+                # for item in jsonCatalog:
+                # result = AiContent.validation_for_name("hamburguesa",jsonCatalog)
+                product = AiContent.validation_for_name(item["name"],jsonCatalog)        
+                item["name"] = product["name"]
+                item["price"] = product["price"]
+                print(product["price"]) 
+                price_total += Decimal(product["price"]) * int(item["amount"])
+                # print(price_total)
+                # print(f"Sumando: {product['price']} x {item['amount']}")
+            
+            for item in json["listServices"]:
+                services = AiContent.validation_for_name(item["name"],jsonCatalog)
+                item["name"] = services["name"]
+                item["price"] = services["price"]
+                
+                price_total += Decimal(services["price"]) * int(item["amount"])
+                
+                
+                
+            
+            print("print - calContent")
+            json["total_price"] = str(price_total)  # Convertir Decimal a str para evitar problemas de serialización
+            print(json)
+            return JsonResponse({
+                "status": 200,
+                "response": json
+            })
+            
+            
+            
+            
+        except Exception as e:
+             return JsonResponse({
+                 "status": 400,
+                 "error": str(e),
+             })
+             
+             
+
+        # print("calMethod")
+        # print(jsonCatalog)
+        # print("LOLOOLOO JAKJSKAJKSK LOLOLOLOL")
+
+        #     for user_product in json["listProducts"]:  # Producto que viene del usuario
+        #         for item in jsonCatalog:  # Productos del catálogo
+        #                 # Comparación flexible (ignorando mayúsculas/minúsculas)
+        #             if item["name"].lower() in user_product["name"].lower():
+        #                 user_product["name_real"] = item["name"]
+        #                 AiContent.validation_for_name()
+        #                 user_product[""]
+        #                 user_product["price"] = item["price"]
+            
+        # try: 
+            
+        #     print("precio_total")
+        #     print(price_total)
+            
+        #     print("💲 Precio total calculado:", price_total)
+            
+
+
+
+            
+        # except Exception as e:
+        #      return JsonResponse({
+        #          "status": 400,
+        #          "error": str(e),
+        #      })
+             
+             
+             
+        # jsonProducts = {
+        #     "name": 
+        #     "type":
+        #     "price":
+        #     "amount"
+        # }
+        
+        # jsonServices = {
+        #     "name": 
+        #     "type":
+        #     "price":
+        #     "amount"
+        # }
+        
+            
+            # for services in json ["listServices"]
+        # data= {
+        #     "listServices": 
+        #     "listProducts":
+        #     "totalPrice": price 
+        # }

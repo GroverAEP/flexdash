@@ -18,7 +18,7 @@ from django.core import serializers
 #importacion de dependecias utils
 import uuid
 from supabase import create_client
-from app.content import ClientContent ,AdminContent,FileContent
+from app.content import ClientContent ,AdminContent,FileContent, CalContent
 
 
 # clientes = Client.objects.all()
@@ -156,6 +156,18 @@ def obtener_pots(request):
     else:
         return JsonResponse({'error': 'Nose pudo obtener los datos'}, status=500)
 
+def cal_price_total (request):
+    data = json.loads(request.body)
+
+    print(data)
+
+    response = CalContent.resave_total_price(data)  
+    print(response)
+           
+    # if response :
+    #     print(response)
+    return JsonResponse(data)
+    
 
 def recibir_dato(request):
 
@@ -220,13 +232,13 @@ def add_admin(request):
             data = json.loads(request.body)
             AdminContent.add_user(data)
             
-
-            return JsonResponse({
-            'status': 200,
-            'response': {
-                "data":str(data)
-                },
-            # "title": "Datos subidos desde body a la BD"
+            if data :
+                return JsonResponse({
+                'status': 200,
+                'response': {
+                    "data":str(data)
+                    },
+                # "title": "Datos subidos desde body a la BD"
         }, status=201)
         except Exception as e:
             return JsonResponse({

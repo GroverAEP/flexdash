@@ -124,7 +124,7 @@ class AdminUser(models.Model):
 
 class Business(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    AdminUser = models.ForeignKey(AdminUser, related_name='admin_user', on_delete=models.CASCADE)
+    AdminUser = models.ForeignKey(AdminUser, related_name='business', on_delete=models.CASCADE)
     idBot = models.CharField(max_length=100, blank=True)
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=100)
@@ -140,21 +140,23 @@ class Business(models.Model):
         return self.name
 
 class Catalog(models.Model):
-    business = models.ForeignKey(Business, related_name="business", on_delete=models.CASCADE)
+    business = models.OneToOneField(Business, related_name="catalog", on_delete=models.CASCADE)
     # catalog_image = CatalogImage(Business, related_name = 'catalog', on_delete=models.CASCADE)
     # catalog_items = CatalogItem()
 
 class CatalogImage(models.Model):
-    catalog = models.ForeignKey(Catalog, related_name="catalog_images", on_delete= models.CASCADE)
     id= models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    catalog = models.ForeignKey(Catalog, related_name="catalog_images", on_delete= models.CASCADE)
     name = models.CharField(max_length=100,)
     type = models.CharField(max_length=100)
+    img_url = models.URLField(blank=True)
     date = models.DateTimeField(auto_now_add=True)
     
 
 
 class CatalogItem(models.Model):
-    catalog = models.ForeignKey(Business, related_name="catalog_items",on_delete= models.CASCADE)
+    id= models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    catalog = models.ForeignKey(Catalog, related_name="catalog_items",on_delete= models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     type = models.CharField(max_length=50)  # "prod - serv"

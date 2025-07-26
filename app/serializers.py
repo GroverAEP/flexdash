@@ -1,8 +1,8 @@
 # serializers.py
 
 from rest_framework import serializers
-from .models import ClientUser, FollowBusiness, CartPayment, Cart, Products
-from .models import Business, AdminUser,TimeZone,CatalogItem,CoWorker,Feedback,MethodPayment,SocialMedia, Catalog, CatalogImage
+from .models import ClientUser, FollowBusiness, CartPayment, Cart, Products         
+from .models import Business, AdminUser,TimeZone,CoWorker,Feedback,MethodPayment,SocialMedia,CatalogImage,CatalogItem,Catalog
 
 
 class SocialMediaSerializer(serializers.ModelSerializer):
@@ -10,7 +10,6 @@ class SocialMediaSerializer(serializers.ModelSerializer):
         model = SocialMedia
         fields = [
             'id',
-            'business',
             'type_social',
             'urlPage',
         ]
@@ -22,7 +21,6 @@ class MethodPaymentSerializer(serializers.ModelSerializer):
         model = MethodPayment
         fields = [
             'id',
-            'business',
             'type',
             'name',
             'lastName',
@@ -42,7 +40,6 @@ class FeedbackSerializer(serializers.ModelSerializer):
         model = Feedback
         fields = [
             'id',
-            'business',
             'name',
             'message',
         ]
@@ -52,46 +49,26 @@ class CoWorkerSerializer(serializers.ModelSerializer):
         model = CoWorker
         fields = [
             'id',
-            'business',
             'coworker_id',
             'status',
         ]
+class CatalogItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CatalogItem
+        fields = ['id', 'name', 'description', 'type', 'price', 'stock', 'date']
 
 class CatalogImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = CatalogImage
-        fields = [
-            'id',
-            'name',
-            'type',
-            'image_url',
-        ]
-
-
-class CatalogItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CatalogItem
-        fields = [
-            'id',
-            'business',
-            'name',
-            'description',
-            'type',
-            'price',
-            'stock',
-            'date',
-        ]
+        fields = ['id', 'name', 'type', 'img_url']
 
 class CatalogSerializer(serializers.ModelSerializer):
-    catalog_images = CatalogImageSerializer(many=True)
-    catalog_items = CatalogItemSerializer(many=True)
-    
+    catalog_items = CatalogItemSerializer(many=True,required= False)
+    catalog_images = CatalogImageSerializer(many=True,required = False)
+
     class Meta:
         model = Catalog
-        fields = [
-            'catalog_images',
-            'catalog_items'
-        ]
+        fields = ['catalog_items', 'catalog_images']
 
 class TimeZoneSerializer(serializers.ModelSerializer):
 
@@ -99,7 +76,6 @@ class TimeZoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = TimeZone
         fields = [
-            'timezone',
             'time_open',
             'time_close',
         ]
@@ -118,7 +94,6 @@ class BusinessSerializer(serializers.ModelSerializer):
         model = Business
         fields = [
             'id',
-            'AdminUser',
             'idBot',
             'name',
             'category',
@@ -130,11 +105,11 @@ class BusinessSerializer(serializers.ModelSerializer):
             'address',
             'logo_url',
             
-            'method_payment'
-            'social_media'
-            'co_workers'
+            'method_payment',
+            'social_media',
+            'co_workers',
             'catalog',
-            'feedback'
+            'feedback',
             'time_zone',
 
         ]
@@ -156,7 +131,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
             'country',
             'email',
             'date',
-            'business'
+            'business',
         ]
 ##############################################
 
