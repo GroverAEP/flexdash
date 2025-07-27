@@ -181,7 +181,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_COOKIE_NAME = "csrftoken"
 CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
-CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "https://tu-front.com","https://flexdash.onrender.com/"]
+CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com',"http://localhost:3000", "https://tu-front.com","https://flexdash.onrender.com/"]
 CSRF_COOKIE_SECURE = False  # True si usas HTTPS
 CSRF_COOKIE_HTTPONLY = False
 
