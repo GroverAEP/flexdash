@@ -156,18 +156,25 @@ def obtener_pots(request):
     else:
         return JsonResponse({'error': 'Nose pudo obtener los datos'}, status=500)
 
+@csrf_exempt
 def cal_price_total (request):
-    data = json.loads(request.body)
+    if request.method == 'POST':
+        try:
 
-    print(data)
+            data = json.loads(request.body)
 
-    response = CalContent.resave_total_price(data)  
-    print(response)
-           
-    # if response :
-    #     print(response)
-    return JsonResponse(data)
-    
+            print(data)
+
+            response = CalContent.resave_total_price(data)  
+            print(response)
+            
+            return JsonResponse(data)   
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON inválido'}, status=400)
+    else:
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+      
+
 
 def recibir_dato(request):
 

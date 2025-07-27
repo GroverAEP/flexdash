@@ -36,7 +36,7 @@ SECRET_KEY='django-insecure-gwi*6%_1^@v%s^c_ue53lu=7v(hi(@r#h-k38b@9gt-x$w!26e'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'flexdash.onrender.com/',  # Permite cualquier subdominio de Render
+    'flexdash.onrender.com',  # Permite cualquier subdominio de Render
     'localhost',
     '127.0.0.1',
 ]
