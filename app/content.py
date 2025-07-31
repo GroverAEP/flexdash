@@ -11,6 +11,11 @@ from decimal import Decimal
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+import mercadopago
+import os
+import requests
+import uuid
+
 class AdminContent():
     @classmethod
     def add_user(self, serializable:json):
@@ -379,10 +384,193 @@ class AiContent:
     
     
     
-# class PayMethodContent():
-#     @classmethod
-#     def create_payout_mercado_pago(self,):
-#         prin
+class PayMethodContent():
+    @staticmethod
+    def get_sdk_mercadopago():
+        sdk = mercadopago.SDK(os.environ.get("MERCADOPAGO_ACCESS_TOKEN"))
+        return sdk
+    
+    @classmethod
+    def create_yape_token(self,data):
+       try:  
+            #crea tarjeta de pago
+            if not data or 'otp' not in data or 'phoneNumber' not in data:
+                return {
+                    'status': 400,
+                    'error': 'Missing required fields'}
+            # Datos capturados desde el frontend
+            otp = data["otp"]  # reemplaza por el OTP real
+            phone_number = data["phoneNumber"]  # reemplaza por el número real
+            request_id = data["requestId"]  # viene de una llamada previa
+            idClient = data["idClient"]
+            cart_items = data["cart_items"]
+            price_total = data["price_total"]
+            
+            # notification_url ="https://tusitio.com/webhook/mercado-pago/",
+                        
+            # URL de la API de Yape
+            url = f"https://api.mercadopago.com/platforms/pci/yape/v1/payment?public_key={os.environ.get("MERCADOPAGO_PUBLIC_KEY")}"
+            
+            print(url)
+            # Cuerpo de la solicitud
+            payload = {
+                "phoneNumber": phone_number,
+                "otp": otp,
+                "requestId": request_id
+                }
+
+            # Encabezados
+            headers = {
+                "Content-Type": "application/json"
+            }
+
+            # Realiza la solicitud
+            response = requests.post(url, json=payload, headers=headers)
+            # return response.json()
+
+            # Muestra la respuesta
+            if response.status_code == 200:
+                yape_token = response.json()
+                # print(yape_token["id"])
+
+                #Realiza el pago
+                sdk = self.get_sdk_mercadopago()   
+
+                request_options = mercadopago.config.RequestOptions()
+                request_options.custom_headers = {
+                'x-idempotency-key': str(uuid.uuid4())
+                }
+                
+                
+                payment_data = {
+                    "description": "Carrito de compras de Juan",
+                    "installments": 1,
+                    "external_reference": "REF-"+ str(idClient),
+                    "payer": {
+                        "email": "test_user_123@testuser.com",
+                        "first_name": "Juan",
+                        "last_name": "Pérez",
+                        "phone": {
+                            "area_code": "01",
+                            "number": "987654321"
+                        },
+                    },
+                    "payment_method_id": "yape",
+                    "token": yape_token["id"],
+                    "transaction_amount": price_total,
+                    # "notification_url": notification_url,
+                    "additional_info": {
+                        "items": cart_items
+                        
+                    }
+                    
+
+                    }
+
+                payment_response = sdk.payment().create(payment_data, request_options=request_options)
+                
+                print("Token generado:", yape_token)
+                return payment_response
+            else:
+                # print("Error al generar token:", response.status_code, response.text)
+                return {"error": "error el generar token"}
+            
+
+            
+       except Exception as e: 
+           return {"error": str(e)}            
+
+
+    @classmethod
+    def payment_notifications(self ,data):
+        try:
+            # Procesar notificaciones de webhook
+            # data = request.get_json()
+            
+            # # Verificar firma si estás en producción
+            # if request.headers.get('x-signature'):
+            #     # Aquí iría la validación de la firma
+            #     pass
+                
+            print(data)
+            # Obtener ID del pago
+            payment_id = data.get('data', {}).get('id')
+            
+            sdk = self.get_sdk_mercadopago()        
+            if not payment_id:
+                return {
+                    'status': 400,
+                    'error': 'Invalid notification format'}
+            
+            # Obtener detalles actualizados del pago
+            payment_response = sdk.payment().get(payment_id)
+            payment = payment_response["response"]
+            
+            # Aquí iría tu lógica de negocio para actualizar tu sistema
+            # según el estado del pago (approved, rejected, pending, etc.)
+            
+            return {
+                'response':payment_response,
+                'status': 200,
+                'payment_id': payment_id,
+                'payment_status': payment['status']
+            }
+            
+        except Exception as e:
+            return {
+                'status':500,
+                'error': str(e)}
+        
+    
+    
+    @classmethod
+    def create_payout_mercado_pago(self,cart):
+        sdk = mercadopago.SDK(os.environ.get("MERCADOPAGO_ACCESS_TOKEN"))
+        # "listProducts" - "listServices"
+        
+        # for product in cart["listProducts"]:
+        
+        # for services in  cart["listServices"]:
+        combined_items = cart.get("listProducts", []) + cart.get("listServices", [])
+        cart_items_Data = []
+
+        for item in cart.get("listProducts", []):
+            cart_items_Data.append({
+                "title": f"{item['name']} (Producto)",
+                "quantity": item["amount"],
+                "unit_price": float(item["price"]),
+                "currency_id": "PEN"
+            })
+
+        for item in cart.get("listServices", []):
+            cart_items_Data.append({
+                "title": f"{item['name']} (Servicio)",
+                "quantity": item["amount"],
+                "unit_price": float(item["price"]),
+                "currency_id": "PEN"
+            })
+                
+        
+        preference_data = {
+             "items":cart_items_Data,
+            "back_urls": {
+                "success": "https://tusitio.com/payment-success/",
+                "failure": "https://tusitio.com/payment-failure/",
+                "pending": "https://tusitio.com/payment-pending/"
+            },
+            "auto_return": "approved",  # para redirigir automáticamente al success
+            "notification_url": "https://tusitio.com/webhook/",  # tu webhook
+            "external_reference": "pedido_12345",  # opcional
+        }
+  
+        preference_response = sdk.preference().create(preference_data)
+        preference = preference_response["response"]
+
+        print(preference_data["items"])
+
+        return JsonResponse({"init_point": preference["init_point"]})
+
+
     
     
     

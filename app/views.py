@@ -3,7 +3,8 @@ import base64
 import json
 import os
 from datetime import datetime
-
+import hmac
+import hashlib
 from django.shortcuts import render
 from django.http import HttpResponse , JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -18,8 +19,7 @@ from django.core import serializers
 #importacion de dependecias utils
 import uuid
 from supabase import create_client
-from app.content import ClientContent ,AdminContent,FileContent, CalContent
-
+from app.content import ClientContent ,AdminContent,FileContent, CalContent,PayMethodContent
 
 # clientes = Client.objects.all()
 # data = serializers.serialize('json',clientes)
@@ -362,7 +362,7 @@ def index(request):
 import mercadopago
 
 
-sdk = mercadopago.SDK(os.environ.get('MERCADOPAGO_ACCESS_TOKEN'))
+# sdk = mercadopago.SDK(os.environ.get('MERCADOPAGO_ACCESS_TOKEN'))
 
 @csrf_exempt
 def crear_pago(request):
@@ -413,3 +413,123 @@ def test_webhook_botpress():
     response = requests.post(url, json=payload, headers=headers)
 
     return response.status_code, response.text
+
+
+def payment_methods(request):
+    # Devuelve métodos de pago habilitados
+    ...
+@csrf_exempt
+def create_checkout_session(request):
+    
+    cart =json.loads(request.body)
+
+    
+    # Crea un link de pago o preferencia
+    if request.method == "POST":
+        checkout = PayMethodContent.create_payout_mercado_pago(cart=cart)
+        return checkout
+    else:
+        
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    ...
+
+def payment_success(request):
+    # Página de confirmación
+    ...
+
+def payment_failure(request):
+    # Página de error
+    ...
+
+def payment_pending(request):
+    # Página cuando el pago no fue confirmado aún
+    ...
+
+@csrf_exempt
+def payment_webhook(request):
+    # Escucha eventos del proveedor de pagos
+    ...
+
+def payment_status(request, order_id):
+    # Consulta el estado del pago desde el backend
+    ...
+    
+def payment_success(request):
+    return render(request, 'payments/success.html')
+
+def payment_failure(request):
+    return render(request, 'payments/failure.html')
+
+def payment_pending(request):
+    return render(request, 'payments/pending.html')
+
+
+@csrf_exempt
+def create_yape_payment(request):
+    if request.method == "POST":
+        try:            
+            data = json.loads(request.body)  
+            print(data)
+            response = PayMethodContent.create_yape_token(data)
+            return JsonResponse(response)
+        
+        except Exception as e:
+            return JsonResponse({"status": 400,"error":e})
+    else: 
+        return JsonResponse({"response": "metodo no permitido: "+ request.method })
+
+
+@csrf_exempt
+def payment_notifications(request):
+    if request.method == "POST":
+        try:
+            client_secret = os.environ.get("CLIENT_SECRET")
+            header = request.headers.get("x-signature")
+
+            print(header)
+            
+            #   # Procesar notificaciones de webhook
+            # # if received_signature:
+            # #     generated_signature = "sha256=" + hmac.new(client_secret, request.body, hashlib.sha256).hexdigest()
+                
+            # #     if hmac.compare_digest(received_signature, generated_signature):
+                    
+            # #         return True  # La firma es válida
+            # #     return False  # Alguien alteró el contenido o no es de Mercado Pago
+            
+            
+            
+                    # return JsonResponse({"error": "No se recibió el header 'x-signature'"}, status=400)
+            if  header :
+
+                # Extrae ts y v1
+                parts = dict(part.split("=") for part in header.split(",") if "=" in part)
+                ts = parts.get("ts")
+                v1 = parts.get("v1")
+
+                print(parts)
+                if not ts or not v1:
+                    return JsonResponse({"error": "Firma inválida (faltan partes)"}, status=400)
+
+                # Cuerpo en bytes
+                raw_body = request.body
+
+                # Genera firma local
+                to_sign = f"{ts}.{raw_body.decode()}".encode()
+            
+                print(to_sign)
+                local_signature = hmac.new(client_secret, to_sign, hashlib.sha256).hexdigest()
+                verification = hmac.compare_digest(local_signature, v1)
+                if not hmac.compare_digest(local_signature, v1):
+                    return JsonResponse({"error": "Firma inválida"}, status=403)
+                print(f"firma verificada {verification}")
+
+            
+            data = json.loads(request.body)
+            response = PayMethodContent.payment_notifications(data=data)
+            return JsonResponse(response, status=200)  # ✅ Estado 200 explícito
+        
+        except Exception as e:
+            return JsonResponse({"status": 400,"error": str(e)})
+    else: 
+        return JsonResponse({"response": "metodo no permitido: "+ request.method })
