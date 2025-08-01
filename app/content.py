@@ -406,6 +406,7 @@ class PayMethodContent():
             cart_items = data["cart_items"]
             price_total = data["price_total"]
             
+            idConversation = data["idConversation"]
             # notification_url ="https://tusitio.com/webhook/mercado-pago/",
                         
             # URL de la API de Yape
@@ -457,13 +458,18 @@ class PayMethodContent():
                     },
                     "payment_method_id": "yape",
                     "token": yape_token["id"],
-                    "transaction_amount": price_total,
+                    "transaction_amount": float(price_total),
                     # "notification_url": notification_url,
                     "additional_info": {
-                        "items": cart_items
+                        "items": cart_items,
                         
-                    }
+                    },
+                    "notification_url": "https://flexdash.onrender.com/api/payment_notifications/",  # tu webhook
                     
+                    "metadata":{
+                    
+                        "idConversation": idConversation
+                    }             
 
                     }
 
@@ -484,38 +490,55 @@ class PayMethodContent():
     @classmethod
     def payment_notifications(self ,data):
         try:
-            # Procesar notificaciones de webhook
-            # data = request.get_json()
-            
-            # # Verificar firma si estás en producción
-            # if request.headers.get('x-signature'):
-            #     # Aquí iría la validación de la firma
-            #     pass
-                
-            print(data)
-            # Obtener ID del pago
-            payment_id = data.get('data', {}).get('id')
-            
-            sdk = self.get_sdk_mercadopago()        
+            print("Notificación recibida:", data)
+            payment_id = data.get("data", {}).get("id")
             if not payment_id:
-                return {
-                    'status': 400,
-                    'error': 'Invalid notification format'}
-            
-            # Obtener detalles actualizados del pago
+                return {"status": 400, "error": "Invalid notification format"}
+
+            sdk = self.get_sdk_mercadopago()
             payment_response = sdk.payment().get(payment_id)
-            payment = payment_response["response"]
-            
-            # Aquí iría tu lógica de negocio para actualizar tu sistema
-            # según el estado del pago (approved, rejected, pending, etc.)
-            
+            payment = payment_response.get("response", {})
+
+            webhook = os.environ.get("BOTPRESS_WEBHOOK_URL")
+            if not webhook:
+                return {"status": 500, "error": "BOTPRESS_WEBHOOK_URL no está definido"}
+
+            headers = {"Content-Type": "application/json"}
+
+            if payment.get("status") in ("approved", "rejected"):
+                payload = {
+                    "response": payment_response,
+                    "payment_id": payment_id,
+                    "payment_status": payment.get("status")
+                }
+
+                try:
+                    response = requests.post(webhook, json=payload, headers=headers, timeout=5)
+                except requests.RequestException as e:
+                    return {
+                        "status": 500,
+                        "error": f"Fallo al llamar al webhook: {e}",
+                        "payment_id": payment_id,
+                        "payment_status": payment.get("status")
+                    }
+
+                # Intentar parsear JSON de forma segura
+
+                return {
+                    "response": payment_response,
+                    "status": 200 if 200 <= response.status_code < 300 else response.status_code,
+                    "payment_id": payment_id,
+                    "payment_status": payment.get("status")
+                }
+
+            # Si no es approved ni rejected, no se notifica
             return {
-                'response':payment_response,
-                'status': 200,
-                'payment_id': payment_id,
-                'payment_status': payment['status']
+                "status": 200,
+                "payment_id": payment_id,
+                "payment_status": payment.get("status"),
+                "note": "estado no manejado para notificación"
             }
-            
+                
         except Exception as e:
             return {
                 'status':500,
