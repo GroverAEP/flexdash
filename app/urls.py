@@ -45,7 +45,9 @@ urlpatterns = [
     path('payment-status/<str:order_id>/', views.payment_status, name='payment_status'),
 
     path('create_yape_payment/', views.create_yape_payment, name= "create_yape_pay"),
-    path('api/payment_notifications/', views.payment_notifications,name="payment_notifications")
+    path('api/payment_notifications/', views.payment_notifications,name="payment_notifications"),
+
+    path('test/webhook/', views.test_webhook, name= "test_webhook")
 
 ]
 

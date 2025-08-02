@@ -405,7 +405,7 @@ class PayMethodContent():
             idClient = data["idClient"]
             cart_items = data["cart_items"]
             price_total = data["price_total"]
-            
+            print(cart_items)
             idConversation = data["idConversation"]
             # notification_url ="https://tusitio.com/webhook/mercado-pago/",
                         
@@ -498,22 +498,36 @@ class PayMethodContent():
             sdk = self.get_sdk_mercadopago()
             payment_response = sdk.payment().get(payment_id)
             payment = payment_response.get("response", {})
+            
+            # re = payment.get("response",{})
+            metadata = payment.get("metadata",{})
+            id_conversation = metadata.get("id_conversation",{})
 
+            print(id_conversation)
+            
+            
             webhook = os.environ.get("BOTPRESS_WEBHOOK_URL")
             if not webhook:
                 return {"status": 500, "error": "BOTPRESS_WEBHOOK_URL no está definido"}
 
             headers = {"Content-Type": "application/json"}
-
+            print(payment.get("payment_status"))
+            print(payment.get("status"))
             if payment.get("status") in ("approved", "rejected"):
+                
                 payload = {
-                    "response": payment_response,
+                    # "response": payment_response,
+                    "conversationId": id_conversation,
+                    "additional_info":payment.get("additional_info"),
+                    "metadata": metadata, 
                     "payment_id": payment_id,
+                    "payment_status_details": payment.get("status_detail"),
                     "payment_status": payment.get("status")
                 }
 
                 try:
                     response = requests.post(webhook, json=payload, headers=headers, timeout=5)
+              
                 except requests.RequestException as e:
                     return {
                         "status": 500,
@@ -525,6 +539,7 @@ class PayMethodContent():
                 # Intentar parsear JSON de forma segura
 
                 return {
+                    "conversationId": id_conversation,
                     "response": payment_response,
                     "status": 200 if 200 <= response.status_code < 300 else response.status_code,
                     "payment_id": payment_id,
@@ -536,7 +551,9 @@ class PayMethodContent():
                 "status": 200,
                 "payment_id": payment_id,
                 "payment_status": payment.get("status"),
-                "note": "estado no manejado para notificación"
+                "note": "estado no manejado para notificación",
+                "p": payment.get("payment_status"),
+                "a":payment.get("status")
             }
                 
         except Exception as e:
@@ -544,6 +561,7 @@ class PayMethodContent():
                 'status':500,
                 'error': str(e)}
         
+
     
     
     @classmethod
@@ -596,6 +614,26 @@ class PayMethodContent():
 
     
     
+
+class TestContent():
+    @classmethod
+    def test_webhook(self, data):
+        
+        webhook = os.environ.get("BOTPRESS_WEBHOOK_URL")
+     
+        payload= {
+            "conversationId": data["conversationId"],
+            "metadata": data["metadata"]
+        }
+        headers = {"Content-Type": "application/json"}
+
+        response = requests.post(webhook, json=payload, headers=headers, timeout=5)
+        
+        print(response)
+        
+        return {
+            "response": payload
+        }
     
     
 class CalContent():
@@ -639,7 +677,7 @@ class CalContent():
             print(price_total)
             
             print("print - calContent")
-            json["total_price"] = str(price_total)  # Convertir Decimal a str para evitar problemas de serialización
+            json["price_total"] = str(price_total)  # Convertir Decimal a str para evitar problemas de serialización
             print(json)
             return JsonResponse({
                 "status": 200,

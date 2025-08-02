@@ -19,7 +19,7 @@ from django.core import serializers
 #importacion de dependecias utils
 import uuid
 from supabase import create_client
-from app.content import ClientContent ,AdminContent,FileContent, CalContent,PayMethodContent
+from app.content import ClientContent ,AdminContent,FileContent, CalContent,PayMethodContent,TestContent
 
 # clientes = Client.objects.all()
 # data = serializers.serialize('json',clientes)
@@ -533,3 +533,17 @@ def payment_notifications(request):
             return JsonResponse({"status": 400,"error": str(e)})
     else: 
         return JsonResponse({"response": "metodo no permitido: "+ request.method })
+    
+    
+    
+@csrf_exempt
+def test_webhook(request):
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body)
+            
+            response = TestContent.test_webhook(body)
+            return JsonResponse(response,status=200)
+        except Exception as e:
+            return JsonResponse({"error": e})
+        
