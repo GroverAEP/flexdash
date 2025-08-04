@@ -10,6 +10,9 @@ from django.http import HttpResponse , JsonResponse
 from decimal import Decimal
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from zoneinfo import ZoneInfo
+import urllib.parse
+
 
 import mercadopago
 import os
@@ -637,61 +640,141 @@ class TestContent():
     
     
 class CalContent():
-    @classmethod    
-    def resave_total_price(self, json):
-        print(json["idBusiness"])
-        price_total = Decimal("0.0")
-
-        jsonCatalog = AdminContent.search_id_catalog(json["idBusiness"])
-
+    
+    @classmethod
+    def verification_time_zone(self,date_str:str,default_year:int):
         try:
-            for item in json["listServices"]:
-                services = AiContent.validation_for_name(item["name"],jsonCatalog)
-                if services["type"] == "serv" or services:
-                    item["name"] = services["name"]
-                    item["price"] = services["price"]
-                    
-                    price_total += Decimal(services["price"]) * int(item["amount"])
-                else: 
-                    item["error"] = "objeto no econtrado"
-                print("Services - CalContent")
-                print(services) 
-                    
-            for item in json["listProducts"]:
-                print(f"items: {item}")
-                # for item in jsonCatalog:
-                # result = AiContent.validation_for_name("hamburguesa",jsonCatalog)
-                product = AiContent.validation_for_name(item["name"],jsonCatalog)        
-                if product["type"] == "prod":
-                    item["name"] = product["name"]
-                    item["price"] = product["price"]
-                    
-                    print(product["price"]) 
-                    price_total += Decimal(product["price"]) * int(item["amount"])
-                else:   
-                    item["error"] = "objeto no econtrado"
-                    # print(price_total)
-                    # print(f"Sumando: {product['price']} x {item['amount']}")
-            
-                
-            print(price_total)
-            
-            print("print - calContent")
-            json["price_total"] = str(price_total)  # Convertir Decimal a str para evitar problemas de serialización
-            print(json)
-            return JsonResponse({
-                "status": 200,
-                "response": json
-            })
-            
-            
-            
-            
+            print(date_str)
+            print(default_year)
+        
+            result = {
+                "success": False,
+                "parsed_date": None,  # será un objeto date si es válido
+                "message": ""
+            }
+
+            if not isinstance(date_str, str) or not date_str.strip():
+                result["message"] = "Fecha debe ser una cadena no vacía."
+                return result
+
+            today = datetime.now(tz=ZoneInfo("America/Lima")).date()
+
+            # Limpia entrada de espacios y slashes extremos
+            cleaned = date_str.strip().strip("/")
+            parts = cleaned.split("/")
+
+            if len(parts) == 2:
+                cleaned = f"{cleaned}/{default_year}"
+            elif len(parts) == 3:
+                pass  # ya viene con año
+            else:
+                result["message"] = "Formato inválido: debe ser 'DD/MM' o 'DD/MM/YYYY'."
+                return result
+
+            try:
+                parsed = datetime.strptime(cleaned, "%d/%m/%Y").date()
+            except ValueError as e:
+                result["message"] = f"Fecha inválida: {e}"
+                return result
+
+            if parsed < today:
+                result["parsed_date"] = parsed
+                result["message"] = "La fecha ya pasó."
+                return result
+
+            result["success"] = True
+            result["parsed_date"] = parsed
+            result["message"] = "Fecha válida."
+        
+            return result
         except Exception as e:
-             return JsonResponse({
-                 "status": 400,
-                 "error": str(e),
-             })
+            return {
+                "error": e
+            }
+    
+    @classmethod    
+    def resave_total_price(cls, payload):
+        if not isinstance(payload, dict):
+            return JsonResponse({"status": 400, "error": "payload debe ser un objeto JSON"}, status=400)
+
+        # validar campos esenciales
+        id_business = payload.get("idBusiness")
+        if not id_business:
+            return JsonResponse({"status": 400, "error": "idBusiness faltante"}, status=400)
+        try:
+            default_year = int(payload.get("default_year", 0))
+        except Exception:
+            return JsonResponse({"status": 400, "error": "default_year inválido"}, status=400)
+
+        price_total = Decimal("0.0")
+        jsonCatalog = AdminContent.search_id_catalog(id_business)
+        if jsonCatalog is None:
+            return JsonResponse({
+                "status": 404,
+                "response": {"error": "catálogo del negocio no encontrado"}
+            }, status=404)
+
+        def validate_and_accumulate(item, expected_type):
+            nonlocal price_total
+            if not isinstance(item, dict):
+                return JsonResponse({"status": 400, "response": {"error": f"item inválido en {expected_type}"}}, status=400)
+
+            title = item.get("title")
+            if not title:
+                return JsonResponse({
+                    "status": 404,
+                    "response": {"error": f"{expected_type} sin título proporcionado"}
+                }, status=404)
+
+            obj = AiContent.validation_for_name(title, jsonCatalog)
+            if not isinstance(obj, dict) or obj.get("type") != expected_type:
+                return JsonResponse({
+                    "status": 404,
+                    "response": {"error": f"{expected_type} '{title}' no válido o no encontrado"}
+                }, status=404)
+
+            # Normalizar campos
+            item["title"] = obj.get("name", title)
+            item["unit_price"] = obj.get("price", "0.0")
+
+            if expected_type == "serv":
+                date_str = item.get("date", "")
+                time_str = item.get("time", "")
+                
+                #validar fechas
+                result = cls.verification_time_zone(date_str=date_str,default_year= default_year)
+                if result.get("success"):
+                    print(result)
+                    item["description"] = f"fecha registrada: {date_str} - Hora: {time_str}"
+                else:
+                    return JsonResponse({
+                        "status": 404,
+                        "response": {"error": f"Fecha pasada es invalida"}
+                    }, status=404)
+                    # item["description"] = "fecha ya pasada invalida"
+                #validar por carrito de compras
+            else:  # prod
+                item["description"] = obj.get("description", "")
+
+            quantity = int(item.get("quantity", 1))
+            unit_price = Decimal(str(obj.get("price", "0.0")))
+            price_total += unit_price * quantity
+            return None  # indica éxito
+
+        # Procesar servicios
+        for service_item in payload.get("listServices", []):
+            err = validate_and_accumulate(service_item, "serv")
+            if isinstance(err, JsonResponse):
+                return err
+
+        # Procesar productos
+        for product_item in payload.get("listProducts", []):
+            err = validate_and_accumulate(product_item, "prod")
+            if isinstance(err, JsonResponse):
+                return err
+
+        payload["price_total"] = str(price_total)
+        return JsonResponse({"status": 200, "response": payload}, status=200)
              
              
 
@@ -748,3 +831,55 @@ class CalContent():
         #     "listProducts":
         #     "totalPrice": price 
         # }
+        
+class  TicketsContent():
+    
+    @classmethod
+    def create_tickets(self, ticketload):
+    
+        collection, conexion = BDConnection.conexion_client_mongo()
+
+        collection.insert_one(ticketload)
+        conexion.close()
+
+        # ticketload={
+            
+        #     "idClient":"",
+        #     "idBusiness":"",
+        #     "idTicket":"",
+        #     "idTransferencia":"",
+        #     "cart_item":"",
+        #     "price_total":0,
+        #     "metadata":{
+                
+        #        "name":"",
+        #        "phoneNumber":0,
+        #        "email":"",
+        #     },
+        #     "qr":"",
+        #     "date":""            ,
+        # }
+        
+    def ticket_to_img():
+        pass
+
+class utilsContent():
+    def make_qr_with_url(base_url: str, id_business: str, id_boleta: str) -> str:
+        """
+        Construye la URL de checkout y genera el QR como data URI.
+        Ejemplo resultante: https://mi-dominio.com/checkout_ticket_url/123/456/
+        """
+        # Asegura que no haya doble slash
+        path = f"checkout_ticket_url/{urllib.parse.quote(id_business)}/{urllib.parse.quote(id_boleta)}/"
+        full_url = urllib.parse.urljoin(base_url.rstrip("/") + "/", path)  # mantiene scheme+host
+
+        # Generar QR de la URL
+        import qrcode, io, base64
+        qr = qrcode.QRCode(box_size=4, border=1)
+        qr.add_data(full_url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return f"data:image/png;base64,{b64}", full_url

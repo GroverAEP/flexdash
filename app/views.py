@@ -2,14 +2,25 @@ import requests
 import base64
 import json
 import os
+import io
+from pathlib import Path
+from weasyprint import HTML
+
 from datetime import datetime
+from django.utils import timezone
 import hmac
 import hashlib
 from django.shortcuts import render
-from django.http import HttpResponse , JsonResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest, FileResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.template.loader import render_to_string
+import qrcode
 
 from django.conf import settings
+from decimal import Decimal
+
+from pdf2image import convert_from_bytes
+import tempfile
 
 
 
@@ -19,7 +30,7 @@ from django.core import serializers
 #importacion de dependecias utils
 import uuid
 from supabase import create_client
-from app.content import ClientContent ,AdminContent,FileContent, CalContent,PayMethodContent,TestContent
+from app.content import ClientContent ,AdminContent,FileContent, CalContent,PayMethodContent,TestContent,TicketsContent,utilsContent
 
 # clientes = Client.objects.all()
 # data = serializers.serialize('json',clientes)
@@ -168,7 +179,7 @@ def cal_price_total (request):
             response = CalContent.resave_total_price(data)  
             print(response)
             
-            return JsonResponse(data)   
+            return response
         except json.JSONDecodeError:
             return JsonResponse({'error': 'JSON inválido'}, status=400)
     else:
@@ -536,14 +547,99 @@ def payment_notifications(request):
     
     
     
+
 @csrf_exempt
-def test_webhook(request):
-    if request.method == "POST":
-        try:
-            body = json.loads(request.body)
-            
-            response = TestContent.test_webhook(body)
-            return JsonResponse(response,status=200)
-        except Exception as e:
-            return JsonResponse({"error": e})
-        
+def generate_ticket_html(request):
+    if request.method != "POST":
+        return HttpResponseBadRequest("Solo POST válido")
+
+    try:
+        payload = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"status": 400, "error": "JSON inválido"}, status=400)
+
+    # Datos mínimos
+    id_business = str(payload.get("business", {}).get("id", ""))
+    id_boleta = str(payload.get("invoice_number", ""))
+    business = {
+        "name": payload.get("business", {}).get("name", "Empresa Ejemplo S.A."),
+        "ruc": payload.get("business", {}).get("ruc", "00000000000"),
+        "support_phone": payload.get("business", {}).get("support_phone", "+51 999 999 999"),
+    }
+    invoice = {"number": id_boleta, "date": payload.get("date", "")}
+
+    raw_items = payload.get("items", [])
+    items = []
+    total = Decimal("0.0")
+    for it in raw_items:
+        qty = int(it.get("quantity", 1))
+        unit_price = Decimal(str(it.get("unit_price", "0.0")))
+        description = it.get("description", it.get("title", ""))
+        subtotal = unit_price * qty
+        items.append({
+            "description": description,
+            "quantity": qty,
+            "unit_price": f"{unit_price:.2f}",
+            "subtotal": f"{subtotal:.2f}",
+        })
+        total += subtotal
+    total_str = f"{total:.2f}"
+
+    context = {
+        "business": business,
+        "invoice": invoice,
+        "items": items,
+        "total": total_str,
+    }
+
+    base_url = request.build_absolute_uri("/")  # para resolver assets relativos
+
+    qr_data_uri, target_url = utilsContent.make_qr_with_url(base_url, id_business, id_boleta)
+    context["qr_data_uri"] = qr_data_uri
+    context["checkout_url"] = target_url  # opcional para depuración
+
+    html = render_to_string("ticket.html", context)
+    weasy_html = HTML(string=html, base_url=base_url)
+
+    output_param = request.GET.get("output", "png").lower()  # "png" por defecto
+
+    try:
+        # Siempre generamos primero el PDF
+        pdf_bytes = weasy_html.write_pdf()
+
+        if output_param == "pdf":
+            response = HttpResponse(pdf_bytes, content_type="application/pdf")
+            response["Content-Disposition"] = 'attachment; filename="boleta.pdf"'
+            return response
+
+        elif output_param == "png":
+            # Convierte la primera página del PDF a imagen (puedes ajustar dpi)
+            images = convert_from_bytes(pdf_bytes, dpi=200, first_page=1, last_page=1)
+            if not images:
+                raise RuntimeError("No se pudo convertir PDF a imagen")
+
+            img_buffer = io.BytesIO()
+            images[0].save(img_buffer, format="PNG")
+            img_buffer.seek(0)
+
+            response = HttpResponse(img_buffer.read(), content_type="image/png")
+            response["Content-Disposition"] = 'inline; filename="boleta.png"'
+            return response
+
+        else:
+            return JsonResponse(
+                {"status": 400, "error": 'Parámetro "output" inválido. Usa "png" o "pdf".'},
+                status=400,
+            )
+
+    except Exception as e:
+        return JsonResponse({"status": 500, "error": f"Error generando archivo: {str(e)}"}, status=500)
+
+
+import weasyprint
+
+
+def checkout_ticket(request, id_business, id_boleta):
+    # Aquí haces lo que necesites: mostrar la boleta, validar, pagar, etc.
+    return HttpResponse(f"Checkout para negocio {id_business}, boleta {id_boleta}")
+

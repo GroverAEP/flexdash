@@ -47,7 +47,10 @@ urlpatterns = [
     path('create_yape_payment/', views.create_yape_payment, name= "create_yape_pay"),
     path('api/payment_notifications/', views.payment_notifications,name="payment_notifications"),
 
-    path('test/webhook/', views.test_webhook, name= "test_webhook")
-
+    # path('test/webhook/', views.test_webhook, name= "test_webhook"),
+    # path('create_ticket/',views.create_ticket_load, name="create_ticket_load" ),
+    
+    path('test/generate_ticket_html/',views.generate_ticket_html, name ="generate_ticket_html"),
+    path("checkout_ticket_url/<str:id_business>/<str:id_boleta>/", views.checkout_ticket, name="checkout_ticket"),
 ]
 
