@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Pre Órdenes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f7f3f3',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+       <!-- Main -->
+    <main class="p-4 md:ml-64 transition-all duration-300">
+
+          <h2 class="text-xl font-bold mb-4">Panel de Opciones</h2>
+      {% include "account/navbar.html" %}    
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Opción 1 -->
+    <div class="bg-gray-50 p-4 rounded-lg hover:shadow-md transition">
+      <h3 class="font-semibold text-lg mb-2">Configuración del Negocio</h3>
+      <p class="text-sm text-gray-600 mb-3">Edita la información principal de tu negocio.</p>
+      <!-- <a href="" class="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Editar</a> -->
+    </div>
+
+    <!-- Opción 2 -->
+    <div class="bg-gray-50 p-4 rounded-lg hover:shadow-md transition">
+      <h3 class="font-semibold text-lg mb-2">Usuarios y Roles</h3>
+      <p class="text-sm text-gray-600 mb-3">Gestiona los usuarios y permisos de acceso.</p>
+      <!-- <a href="" class="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Gestionar</a> -->
+    </div>
+
+    <!-- Opción 3 -->
+    <div class="bg-gray-50 p-4 rounded-lg hover:shadow-md transition">
+      <h3 class="font-semibold text-lg mb-2">Preferencias</h3>
+      <p class="text-sm text-gray-600 mb-3">Cambia tus preferencias de visualización y alertas.</p>
+      <!-- <a href="" class="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Ver opciones</a> -->
+    </div>
+
+    <!-- Opción 4 -->
+    <div class="bg-gray-50 p-4 rounded-lg hover:shadow-md transition">
+      <h3 class="font-semibold text-lg mb-2">Integraciones</h3>
+      <p class="text-sm text-gray-600 mb-3">Conecta tu cuenta con otros sistemas como Stripe, WhatsApp, etc.</p>
+      <!-- <a href="" class="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Integrar</a> -->
+    </div>
+  </div>
+
+
+    </main>
+
+
+
+
+ <script>
+        const sidebar = document.getElementById('sidebar');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeSidebarItems = document.querySelectorAll('.close-sidebar');
+        const closeMenuOnClick = document.getElementById('closeMenuOnClick');
+
+        // Abrir/cerrar menú en celulares
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Cerrar menú al hacer click en un enlace del sidebar
+        closeSidebarItems.forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        });
+
+        // Cerrar menú al dar clic en el título
+        closeMenuOnClick.addEventListener('click', () => {
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    </script>
+</body>
+</html>

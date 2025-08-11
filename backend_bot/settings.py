@@ -53,13 +53,22 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     #app origin
-    'app',
+    'app.apps.AppConfigApp',
     'rest_framework',
+    'frontend.apps.FrontendConfig',
+        
+
 
 
 ]
 
+# CSRF_FAILURE_VIEW = 'app.views.csrf_failure'
+
+SESSION_COOKIE_AGE = 3600  # 1 hora
+LOGIN_URL = '/login/'
+
 MIDDLEWARE = [
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -67,11 +76,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'app.core.middleware.LoginRequiredMiddleware',
+    'app.core.middleware.BusinessSessionMiddleware'
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRend  erer',
+        'rest_framework.renderers.JSONRenderer',
     ]
 }
 

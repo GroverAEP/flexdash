@@ -200,4 +200,74 @@ class SocialMedia(models.Model):
     type_social = models.CharField(max_length=50)
     urlPage = models.URLField(blank=True, null=True, verbose_name="Página web")
 
+#####################################################
+#Profile
+from django.contrib.auth.models import User
+class UserType(models.TextChoices):
+    ADMIN = 'admin', 'Admin'
+    CLIENTE = 'client', 'Client'
+    SOPORTE = 'soport', 'Soport'
 
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    id_profile = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )# email = models.EmailField(blank=True, null=False)
+    type = models.CharField(
+        max_length=20,
+        choices=UserType.choices,
+        default=UserType.CLIENTE)
+    
+    # phone = models.CharField(max_length=20,blank=True)
+    is_active = models.BooleanField(default=True)   # ← Aquí está
+    date = models.DateTimeField(auto_now_add=True)
+
+    # avatar_url = models.URLField(blank=True, null=True)
+    # def save(self, *args, **kwargs):
+    #         if not self.id:
+    #             # Genera UUID basado en el email
+    #             self.id = str(uuid.uuid5(uuid.NAMESPACE_DNS, self.email))
+    #         super().save(*args, **kwargs)
+
+    def __str__(self):
+            return f'Perfil de {self.user.username}'
+        
+    def get_id(self):
+        return self.id_profile
+
+
+
+
+class Order(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_CANCELLED = 'cancelled'
+    STATUS_COMPLETED = 'completed'
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_CANCELLED, 'Cancelled'),
+        (STATUS_COMPLETED, 'Completed'),
+    ]
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    id_business = models.UUIDField(default=uuid.uuid4,null=False, blank=False,editable=True	)
+    id_client = models.UUIDField(default=uuid.uuid4,null=False, blank=False,editable=True	)  
+    carts = models.JSONField(default=dict, blank=True)  # Datos adicionales de la orden
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING
+    )
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Order {self.id} - {self.status}"

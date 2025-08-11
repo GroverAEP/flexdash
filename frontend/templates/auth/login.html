@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Iniciar sesión</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center px-4">
+  <div class="max-w-md w-full bg-white rounded-xl shadow-md p-8">
+    <h2 class="text-2xl font-bold text-center mb-6">Iniciar sesión</h2>
+
+    {% if messages %}
+      {% for m in messages %}
+        <div class="mb-4 px-4 py-2 rounded 
+          {% if m.tags == 'success' %}bg-green-100 text-green-800
+          {% elif m.tags == 'error' %}bg-red-100 text-red-800
+          {% else %}bg-gray-100 text-gray-800{% endif %}">
+          {{ m }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}" class="space-y-5">
+      {% csrf_token %}
+      <div>
+        <label for="id_username" class="block text-sm font-medium text-gray-700">Usuario</label>
+        <input id="id_username" name="username" type="text" required
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          value="{{ request.POST.username }}">
+      </div>
+      <div>
+        <label for="id_password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+        <input id="id_password" name="password" type="password" required
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+      </div>
+      <button type="submit"
+        class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
+        Entrar
+      </button>
+    </form>
+
+    <p class="text-center text-sm text-gray-500 mt-4">
+      ¿No tienes cuenta?
+      <a href="{% url 'login' %}" class="text-blue-600 font-medium hover:underline">Regístrate</a>
+    </p>
+  </div>
+</body>
+</html>

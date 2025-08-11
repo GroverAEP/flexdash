@@ -1,0 +1,142 @@
+<!-- {# templates/dashboard_base.html #}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Dashboard{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+
+
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Pre Órdenes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f7f3f3',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Navbar -->
+    <!-- <header class="flex items-center justify-between bg-white px-4 py-2 shadow md:hidden">
+        <button id="menuBtn" class="text-2xl">&#9776;</button>
+        <h1 class="text-lg font-semibold">Dashboard</h1>
+    </header> -->
+
+    <!-- Sidebar -->
+    <!-- <aside id="sidebar" class="fixed top-0 left-0 w-64 h-full bg-white shadow transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50">
+        <div class="p-4 border-b flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+                <div class="text-sm">
+                    <p class="font-medium">name Business</p>
+                </div>
+            </div> -->
+            <!-- Botón para cerrar el menú en móviles -->
+            <!-- <button id="closeBtn" class="md:hidden text-xl font-bold">&times;</button>
+        </div>
+        <nav class="p-4 text-sm space-y-4">
+            <a href="#" class="block hover:text-blue-500 toggleSidebar">Dashboard</a>
+            <a href="#" class="block hover:text-blue-500 toggleSidebar">Pre órdenes</a>
+            <a href="#" class="block hover:text-blue-500 toggleSidebar">Opciones</a>
+            <a href="#" class="block hover:text-red-500 toggleSidebar">Logout</a>
+        </nav>
+    </aside> -->
+
+      {% include "business/navbar.html" %}    
+        <!-- {{request.session.unique_business}} -->
+        <!-- {{business}} -->
+       <!-- Main -->
+    <main class="p-4 md:ml-64 transition-all duration-300">
+        <!-- Card business -->
+        <div class="bg-primary rounded-2xl border border-black p-6 mb-6 flex flex-col sm:flex-row justify-between items-center shadow">
+            <div class="space-y-1 text-center sm:text-left">
+                <h2 class="text-xl font-bold">Negocio: <span class="text-gray-700">{{request.session.unique_business.name}}</span></h2>
+                <!-- <p class="text-gray-600">Total Órdenes: 152</p>
+                <p class="text-gray-600">En curso: 5</p> -->
+                <p class="text-gray-600">Ganancias este mes: S/ 3,200</p>
+                <p class="text-green-600 font-semibold">Estado: {{request.session.unique_business.status}}</p>
+            </div>
+            <div class="w-24 h-24 bg-gray-300 rounded-full mt-4 sm:mt-0"></div>
+        </div>
+
+
+        <!-- FeedBack -->
+        <!-- Grid Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="bg-white shadow rounded p-4">
+                <h3 class="text-sm text-gray-500">Órdenes hoy</h3>
+                <p class="text-2xl font-bold">24</p>
+            </div>
+            <div class="bg-white shadow rounded p-4">
+                <h3 class="text-sm text-gray-500">Ganancias hoy</h3>
+                <p class="text-2xl font-bold">S/ 540</p>
+            </div>
+            <div class="bg-white shadow rounded p-4">
+                <h3 class="text-sm text-gray-500">Clientes nuevos</h3>
+                <p class="text-2xl font-bold">3</p>
+            </div>
+        </div>
+        
+        
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+           
+                <h3 class="text-sm text-gray-500">comentarios</h3>
+                <p class="text-2xl font-bold">usuario 1</p>
+           
+        </div>
+
+
+
+
+
+    </main>
+
+    <!-- JS Toggle -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeSidebarItems = document.querySelectorAll('.close-sidebar');
+        const closeMenuOnClick = document.getElementById('closeMenuOnClick');
+
+        // Abrir/cerrar menú en celulares
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Cerrar menú al hacer click en un enlace del sidebar
+        closeSidebarItems.forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        });
+
+        // Cerrar menú al dar clic en el título
+        closeMenuOnClick.addEventListener('click', () => {
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    </script>
+</body>
+</html>

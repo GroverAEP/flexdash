@@ -3,6 +3,22 @@
 from rest_framework import serializers
 from .models import ClientUser, FollowBusiness, CartPayment, Cart, Products         
 from .models import Business, AdminUser,TimeZone,CoWorker,Feedback,MethodPayment,SocialMedia,CatalogImage,CatalogItem,Catalog
+from app.models import Order
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order 
+        fields = [
+            'id',
+            'id_business',
+            'id_client',
+            'carts',
+            'status',
+            'total_amount',
+            'date'
+        ]
+
+
 
 
 class SocialMediaSerializer(serializers.ModelSerializer):

@@ -11,7 +11,8 @@ class BDConnection:
             os.environ.get("MONGO_ATLAS_KEY"),
             # settings.MONGO_ATLAS_KEY,
             server_api=ServerApi('1'),
-            tlsCAFile=certifi.where()
+            tlsCAFile=certifi.where(),
+            uuidRepresentation='standard'
         )
         print(f"Conexión exitosa con {client}")
         return client
@@ -27,3 +28,9 @@ class BDConnection:
         conexion = cls.connection_mongo()
         collection = conexion['vlexWay']
         return collection['admins'], conexion
+    
+    @classmethod
+    def conexion_order_mongo(cls):
+        conexion = cls.connection_mongo()
+        collection = conexion['vlexWay']
+        return collection['orders'], conexion

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Negocios</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+    {% include 'account/navbar.html' %}
+
+
+
+  
+
+
+
+
+  <!-- Main content -->
+  <main class="md:ml-64 transition-all duration-300">
+    <!-- Header -->
+    <header class="bg-gray-500 text-white p-6 text-xl font-bold">
+      Negocios
+    </header>
+
+    
+    
+    
+    
+    <!-- Cards -->
+    {% if request.session.business.status == 201 %}
+    <div class="p-4">
+      <h7>Sin negocios encontrados?.Pruebe solicitando uno.</h7>
+      <Button class="bg-blue-600">Solicitar </Button>
+    </div>
+    {% else %}
+    <!-- Filtros -->
+    <section class="p-4 text-center text-sm font-medium">
+      Aca genera parámetros que tengan con ver con filtros
+    </section>
+    <section class="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    
+          {% for business in request.session.business %}
+          <div class="bg-gray-100 shadow p-4 rounded">
+    
+            
+            <h3 class="font-semibold mb-2">Nombre del negocio: {{business.name}}</h3>
+            <h1>categoria:{{ business.category}}</h1>
+            <p class="text-sm text-gray-600">Estado: <span class="text-green-600">abierto</span></p>
+            
+            <form method="post" action="{% url 'account-business-dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="business_id" value="{{ business.id }}">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                  Generar Evento
+                </button>
+            </form>
+          </div>
+          {% endfor %}
+    
+          
+        </section>
+        {% endif %}
+  </main>
+
+
+    <!-- JS Toggle -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeSidebarItems = document.querySelectorAll('.close-sidebar');
+        const closeMenuOnClick = document.getElementById('closeMenuOnClick');
+
+        // Abrir/cerrar menú en celulares
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Cerrar menú al hacer click en un enlace del sidebar
+        closeSidebarItems.forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        });
+
+        // Cerrar menú al dar clic en el título
+        closeMenuOnClick.addEventListener('click', () => {
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    </script>
+    
+
+</body>
+</html>

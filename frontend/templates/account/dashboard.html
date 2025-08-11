@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Account-Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f7f3f3',
+                    }
+                }
+            }
+        }
+    </script>
+      <!-- 📌 Librería Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Navbar -->
+    <!-- <header class="flex items-center justify-between bg-white px-4 py-2 shadow md:hidden">
+        <button id="menuBtn" class="text-2xl">&#9776;</button>
+        <h1 class="text-lg font-semibold">Dashboard</h1>
+    </header> -->
+
+    <!-- Sidebar -->
+    <!-- <aside id="sidebar" class="fixed top-0 left-0 w-64 h-full bg-white shadow transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50">
+        <div class="p-4 border-b flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+                <div class="text-sm">
+                    <p class="font-medium">name Business</p>
+                </div>
+            </div> -->
+            <!-- Botón para cerrar el menú en móviles -->
+            <!-- <button id="closeBtn" class="md:hidden text-xl font-bold">&times;</button>
+        </div>
+        <nav class="p-4 text-sm space-y-4">
+            <a href="#" class="block hover:text-blue-500 toggleSidebar">Dashboard</a>
+            <a href="#" class="block hover:text-blue-500 toggleSidebar">Pre órdenes</a>
+            <a href="#" class="block hover:text-blue-500 toggleSidebar">Opciones</a>
+            <a href="#" class="block hover:text-red-500 toggleSidebar">Logout</a>
+        </nav>
+    </aside> -->
+
+
+    
+      {% include "account/navbar.html" %}    
+
+
+       <!-- Main -->
+    <main class="md:ml-64 transition-all duration-300">
+        <!-- Card Analisis datos generales -->
+        <div class="bg-gray-300  border  p-6 mb-6 flex flex-col sm:flex-row   shadow gap-10">
+            <!-- 📊 Gráfico -->
+            <div class="chart-container border-gray-400" style="width: 100%; height: 300px;">
+                <div>Ganancias totales</div>
+                <canvas id="gananciaChart"></canvas>
+            </div>
+
+            <!-- Separador -->
+            <!-- <span class="hidden sm:block w-px bg-gray-400 mx-10"></span> -->
+          
+            <!-- 📋 Panel de información -->
+            <div class="bg-white  shadow-md p-4 p-d  sm:mt-0 sm:ml-6 w-full sm:w-1/3">
+                <h1 class="text-xl font-bold text-gray-800 mb-2">Ganancia Mensuales</h1>
+                <h2 class="text-lg text-gray-600">Usuarios nuevos</h2>
+                <h3 class="text-sm text-gray-500 mt-2">Marco estadístico</h3>
+            </div>
+        </div>
+
+
+        <!-- Card datos secundarios relevantes -->
+        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      
+            <div class="bg-white shadow rounded p-4">
+                <h3 class="text-sm text-gray-500">Negocios actuales</h3>
+                <p class="text-2xl font-bold">3</p>
+            </div>
+            
+            <div class="bg-white shadow rounded p-4">
+                <h3 class="text-sm text-gray-500">N de clientes nuevos:</h3>
+                <p class="text-2xl font-bold">3</p>
+            </div>
+            <div class="bg-white shadow rounded p-4">
+                <h3 class="text-sm text-gray-500">ganancias mensual:</h3>
+                <p class="text-2xl font-bold">3</p>
+            </div>
+        </div>
+        
+        
+        
+        <div class="bg-gray-300 border p-6 mb-6 w-full max-w-5xl h-auto mx-auto">
+          
+            
+            
+          <h1 class="text-xl font-bold mb-4">Dashboard de Ganancias Mensuales</h1>
+        
+        
+          
+          <!-- 📊 Gráfico -->
+          <div class="chart-container w-full h-96 mb-6">
+            <canvas id="myChart"></canvas>
+          </div>
+        
+          <!-- 📋 Tabla -->
+          <table class="w-full border-collapse border border-gray-400">
+            <thead class="bg-gray-200">
+              <tr>
+                <th class="border border-gray-400 px-4 py-2">Mes</th>
+                <th class="border border-gray-400 px-4 py-2">Café Aroma</th>
+                <th class="border border-gray-400 px-4 py-2">Tienda Express</th>
+                <th class="border border-gray-400 px-4 py-2">Tecno Store</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="border border-gray-400 px-4 py-2">Enero</td>
+                <td class="border border-gray-400 px-4 py-2">$8,500</td>
+                <td class="border border-gray-400 px-4 py-2">$6,200</td>
+                <td class="border border-gray-400 px-4 py-2">$2,500</td>
+              </tr>
+              <tr>
+                <td class="border border-gray-400 px-4 py-2">Febrero</td>
+                <td class="border border-gray-400 px-4 py-2">$9,200</td>
+                <td class="border border-gray-400 px-4 py-2">$6,800</td>
+                <td class="border border-gray-400 px-4 py-2">$3,100</td>
+              </tr>
+              <tr>
+                <td class="border border-gray-400 px-4 py-2">Marzo</td>
+                <td class="border border-gray-400 px-4 py-2">$8,800</td>
+                <td class="border border-gray-400 px-4 py-2">$7,000</td>
+                <td class="border border-gray-400 px-4 py-2">$3,500</td>
+              </tr>
+              <tr>
+                <td class="border border-gray-400 px-4 py-2">Abril</td>
+                <td class="border border-gray-400 px-4 py-2">$10,000</td>
+                <td class="border border-gray-400 px-4 py-2">$6,900</td>
+                <td class="border border-gray-400 px-4 py-2">$4,200</td>
+              </tr>
+              <tr>
+                <td class="border border-gray-400 px-4 py-2">Mayo</td>
+                <td class="border border-gray-400 px-4 py-2">$9,500</td>
+                <td class="border border-gray-400 px-4 py-2">$7,500</td>
+                <td class="border border-gray-400 px-4 py-2">$4,000</td>
+              </tr>
+              <tr>
+                <td class="border border-gray-400 px-4 py-2">Junio</td>
+                <td class="border border-gray-400 px-4 py-2">$10,200</td>
+                <td class="border border-gray-400 px-4 py-2">$7,800</td>
+                <td class="border border-gray-400 px-4 py-2">$4,500</td>
+              </tr>
+              <tr>
+                <td class="border border-gray-400 px-4 py-2">Julio</td>
+                <td class="border border-gray-400 px-4 py-2">$10,500</td>
+                <td class="border border-gray-400 px-4 py-2">$8,200</td>
+                <td class="border border-gray-400 px-4 py-2">$4,700</td>
+              </tr>
+            </tbody>
+          </table>
+        
+        </div>
+          <!-- Card Analisis datos generales -->
+        <div class="bg-gray-300  border  p-6 mb-6 flex flex-col sm:flex-row justify-between items-center shadow">
+            <div class="space-y-1 text-center sm:text-left">
+                <!-- {{request.user.email}} -->
+                <p class="text-gray-600">Feedback y comentarios con respecto asus negocios</p>
+             
+            </div>
+            <div class="w-24 h-24 bg-gray-300 rounded-full mt-4 sm:mt-0"></div>
+        </div>
+
+
+
+
+
+
+
+<!-- 📌 Código para el gráfico -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  const ctAx = document.getElementById('gananciaChart').getContext('2d');
+
+  new Chart(ctAx, {
+    type: 'bar', // Puedes cambiar a 'line' si quieres gráfico lineal
+    data: {
+      labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'], // Meses
+      datasets: [{
+        label: 'Ganancia (USD)',
+        data: [8500, 9200, 7800, 10000, 9500, 11000], // Ganancia por mes
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+
+
+
+
+
+
+
+
+<script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const ctx = document.getElementById('myChart');
+
+
+
+
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio'],
+    datasets: [
+      {
+        label: 'Café Aroma',
+        data: [8500, 9200, 8800, 10000, 9500, 10200, 10500],
+        borderColor: '#4CAF50',
+        backgroundColor: '#4CAF50',
+        tension: 0.3
+      },
+      {
+        label: 'Tienda Express',
+        data: [6200, 6800, 7000, 6900, 7500, 7800, 8200],
+        borderColor: '#2196F3',
+        backgroundColor: '#2196F3',
+        tension: 0.3
+      },
+      {
+        label: 'Tecno Store',
+        data: [2500, 3100, 3500, 4200, 4000, 4500, 4700],
+        borderColor: '#FF9800',
+        backgroundColor: '#FF9800',
+        tension: 0.3
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+</script>
+    <!-- JS Toggle -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeSidebarItems = document.querySelectorAll('.close-sidebar');
+        const closeMenuOnClick = document.getElementById('closeMenuOnClick');
+
+        // Abrir/cerrar menú en celulares
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Cerrar menú al hacer click en un enlace del sidebar
+        closeSidebarItems.forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        });
+
+        // Cerrar menú al dar clic en el título
+        closeMenuOnClick.addEventListener('click', () => {
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    </script>
+    </main>
+
+
+
+
+
+</body>
+</html>

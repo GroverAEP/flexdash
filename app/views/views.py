@@ -2,25 +2,16 @@ import requests
 import base64
 import json
 import os
-import io
 from pathlib import Path
-from weasyprint import HTML
 
 from datetime import datetime
 from django.utils import timezone
 import hmac
 import hashlib
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest, FileResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.template.loader import render_to_string
-import qrcode
+from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie,requires_csrf_token
 
-from django.conf import settings
-from decimal import Decimal
-
-from pdf2image import convert_from_bytes
-import tempfile
 
 
 
@@ -29,23 +20,154 @@ from django.core import serializers
 
 #importacion de dependecias utils
 import uuid
-from supabase import create_client
-from app.content import ClientContent ,AdminContent,FileContent, CalContent,PayMethodContent,TestContent,TicketsContent,utilsContent
+from app.content.api import ClientContent, CalContent,PayMethodContent,TestContent,TicketsContent,utilsContent,LoadContent
+from app.content.file import FileContent
+from app.content.business import BusinessContent
+from app.content.admin import AdminContent
+from app.content.auth  import AuthContent
+
+# from app.services.analytics import AnalyticsOrders
+# import app.content.api
 
 # clientes = Client.objects.all()
 # data = serializers.serialize('json',clientes)
 
 
-supabase = create_client(os.environ.get('SUPABASE_URL'), os.environ.get('SUPABASE_KEY'))
+
+# def extraer_csrf_de_cookie_header(cookie_header: str) -> str | None:
+#     cookies = cookie_header.split(';')
+#     for cookie in cookies:
+#         key_value = cookie.strip().split('=')
+#         if len(key_value) == 2 and key_value[0] == 'csrftoken':
+#             return key_value[1]
+#     return None
+
+# @requires_csrf_token
+# def csrf_failure(request, reason=""):
+#     print(request.body)
+#     print("CSRF error:", reason)
+#     return redirect('/get-csrf/')  # o tu página de inicio de sesión
+
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    print(request.GET.get("next", "/"))
+    print(request.COOKIES.get("csrftoken"))
+    # request.headers.get("X-CSRFTOKEN") = request.COOKIES.get("csrftoken")
+   
+    # Dom / A / url
+   
+    return JsonResponse({'message': 'CSRF cookie set correctamente.'})
+
+
+def login_admin(request):
+#   get_csrf_token()    
+
+  if request.method == "POST":
+        try:
+            print(request.headers.get("Cookie"))
+
+            data = json.loads(request.body)
+            
+            
+            serial = data.get("auth")   
+            
+            response = AuthContent.login_admin(request=request,data=serial)
+            
+            if data :
+                return JsonResponse({
+                'status': 200,
+                'CSFR': request.headers.get("X-CSRFToken"),
+                'response': {
+                    "data":data
+                    },
+                # "title": "Datos subidos desde body a la BD"
+            }, status=201)
+            return JsonResponse({'success': f'Superusuario {response} creado correctamente'})     
+                
+        except Exception as e:
+            
+            return JsonResponse({
+            "LOL":"A",
+            'status': 400,
+            'response': "datos incompletos."
+            ,'error': str(e)}, status=400)
+        
+              
+
 
 @csrf_exempt
-def upload_image_to_supabase(request):
+def reg_admin(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+        
+            print(request.FILES.get("logo",""))
+           
+            
+            if request.method != 'POST':
+                return JsonResponse({"response", "No es posible obtener vistas"})
+
+            response = AuthContent.reg_admin(data)
+            
+            if response:
+             return response
+            
+            if data :
+                return JsonResponse({
+                'status': 200,
+                'response': {
+                    "data":data
+                    },
+                # "title": "Datos subidos desde body a la BD"
+            }, status=201)
+                
+        except Exception as e:
+            return JsonResponse({
+            'status': 400,
+            'response': "datos incompletos."
+            ,'error': str(e)}, status=400)
+            
+
+def reg_business(request):
+    if request.method != "POST":
+        return JsonResponse({
+            'status':404,
+            'error': f'Metodo Invalido {request.method}'
+        })
+        
+    try:
+        id_admin = request.headers.get('Id-Admin')
+        print(id_admin)
+        data = json.loads(request.body)
+        response = BusinessContent.reg_business(id_admin, data)
+                
+        if data :
+            return JsonResponse({
+            'status': 200,
+            'response': {
+                "data":data
+                },
+            # "title": "Datos subidos desde body a la BD"
+        }, status=201)
+            
+    except Exception as e:
+        return JsonResponse({
+        'status': 400,
+        'response': "datos incompletos."
+        ,'error': str(e)}, status=400)
+
+
+
+
+@csrf_exempt
+def upload_logo_business(request):
     if request.method == 'POST':
-        file = request.FILES.get('imagen')  # En Django, por ejemplo
+        file = request.FILES.get('logo')  # En Django, por ejemplo
  
         #LAS IMAGENES NO VAN EN EL JSON (URL PUBLICAS / STR)       
-        json = FileContent.search_image_logo(supabase, idAdmin="12389283")    
+        json = FileContent.upload_logo_business( idAdmin="12389283")    
         print(json)
+        
         
         if json:
             return JsonResponse({
@@ -61,6 +183,14 @@ def upload_image_to_supabase(request):
         "status": 200,
         "response": f"Metodo no valido:  {requests.method}"   
     })
+    
+    
+def upload_catalog_to_business(request):
+    if request.method == "POST":
+        file = request.Files.get('catalog')
+
+    
+    
 # def get_public_url(filename):
 #     url = supabase.storage.from_(settings.SUPABASE_BUCKET).get_public_url(filename)
 #     return url['data']['publicUrl']
@@ -97,6 +227,12 @@ def upload_image_to_supabase(request):
 #         "filename": filename
 #     }
 
+# @csrf_exempt
+# def add_admin(request):
+
+        
+    
+    
 
 @csrf_exempt
 def add_business():
@@ -113,6 +249,8 @@ def add_business():
 #Admin
 #Business
 #Catalog
+
+
 
 
 
@@ -242,32 +380,11 @@ def add_catalog(request):
 
 
 
-
-@csrf_exempt
-def add_admin(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            AdminContent.add_user(data)
-            
-            if data :
-                return JsonResponse({
-                'status': 200,
-                'response': {
-                    "data":str(data)
-                    },
-                # "title": "Datos subidos desde body a la BD"
-        }, status=201)
-        except Exception as e:
-            return JsonResponse({
-            'status': 400,
-            'response': "datos incompletos."
-            ,'error': str(e)}, status=400)
             
 
 
 @csrf_exempt
-def add_user(request):
+def add_client(request):
         #validacion errores
     if request.method == "POST":
         try:
@@ -318,7 +435,7 @@ def add_user(request):
 
 
 @csrf_exempt
-def validation_user(request):
+def validate_client(request):
     if request.method == "GET":
         try:
             phone = request.GET.get('phone')
@@ -351,6 +468,9 @@ def encode_image(filename):
     with open(filename, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
+
+def create_order(add_order):
+    A
 
 
 
@@ -558,85 +678,26 @@ def generate_ticket_html(request):
     except json.JSONDecodeError:
         return JsonResponse({"status": 400, "error": "JSON inválido"}, status=400)
 
-    # Datos mínimos
-    id_business = str(payload.get("business", {}).get("id", ""))
-    id_boleta = str(payload.get("invoice_number", ""))
-    business = {
-        "name": payload.get("business", {}).get("name", "Empresa Ejemplo S.A."),
-        "ruc": payload.get("business", {}).get("ruc", "00000000000"),
-        "support_phone": payload.get("business", {}).get("support_phone", "+51 999 999 999"),
-    }
-    invoice = {"number": id_boleta, "date": payload.get("date", "")}
-
-    raw_items = payload.get("items", [])
-    items = []
-    total = Decimal("0.0")
-    for it in raw_items:
-        qty = int(it.get("quantity", 1))
-        unit_price = Decimal(str(it.get("unit_price", "0.0")))
-        description = it.get("description", it.get("title", ""))
-        subtotal = unit_price * qty
-        items.append({
-            "description": description,
-            "quantity": qty,
-            "unit_price": f"{unit_price:.2f}",
-            "subtotal": f"{subtotal:.2f}",
-        })
-        total += subtotal
-    total_str = f"{total:.2f}"
-
-    context = {
-        "business": business,
-        "invoice": invoice,
-        "items": items,
-        "total": total_str,
-    }
+    context = LoadContent.ticket_payload(payload)
 
     base_url = request.build_absolute_uri("/")  # para resolver assets relativos
 
-    qr_data_uri, target_url = utilsContent.make_qr_with_url(base_url, id_business, id_boleta)
+    qr_data_uri, target_url = utilsContent.make_qr_with_url(base_url, context.get("id_business"), context.get("id_boleta"))
     context["qr_data_uri"] = qr_data_uri
     context["checkout_url"] = target_url  # opcional para depuración
 
-    html = render_to_string("ticket.html", context)
-    weasy_html = HTML(string=html, base_url=base_url)
 
     output_param = request.GET.get("output", "png").lower()  # "png" por defecto
 
-    try:
-        # Siempre generamos primero el PDF
-        pdf_bytes = weasy_html.write_pdf()
+    response = utilsContent.html_to(context=context,output_param=output_param,base_url=base_url)
 
-        if output_param == "pdf":
-            response = HttpResponse(pdf_bytes, content_type="application/pdf")
-            response["Content-Disposition"] = 'attachment; filename="boleta.pdf"'
-            return response
-
-        elif output_param == "png":
-            # Convierte la primera página del PDF a imagen (puedes ajustar dpi)
-            images = convert_from_bytes(pdf_bytes, dpi=200, first_page=1, last_page=1)
-            if not images:
-                raise RuntimeError("No se pudo convertir PDF a imagen")
-
-            img_buffer = io.BytesIO()
-            images[0].save(img_buffer, format="PNG")
-            img_buffer.seek(0)
-
-            response = HttpResponse(img_buffer.read(), content_type="image/png")
-            response["Content-Disposition"] = 'inline; filename="boleta.png"'
-            return response
-
-        else:
-            return JsonResponse(
-                {"status": 400, "error": 'Parámetro "output" inválido. Usa "png" o "pdf".'},
-                status=400,
-            )
-
-    except Exception as e:
-        return JsonResponse({"status": 500, "error": f"Error generando archivo: {str(e)}"}, status=500)
+    print(response)
+    
+    
+    return response
 
 
-import weasyprint
+
 
 
 def checkout_ticket(request, id_business, id_boleta):

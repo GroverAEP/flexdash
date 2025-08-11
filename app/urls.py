@@ -1,6 +1,14 @@
 from django.contrib import admin
 from django.urls import path
-from app import views
+from app.views import views
+from app.views.order import OrderCreateAPIView,OrderCanceledView,OrderDashBoardView
+#separo la vista en 2 
+
+#Admin
+#client
+#Analitycs
+#Business
+#orders
 
 urlpatterns = [
     #run method function 
@@ -8,11 +16,23 @@ urlpatterns = [
     path('get_post/', views.obtener_pots, name="post1"),
     
     #Post
-    path('upload_image_to_supabase/', views.upload_image_to_supabase,name="post"),
+    path('upload_logo_business/', views.upload_logo_business,name="post"),
     # path('insertar_document/', views.connection_mongo, name="enviar_Dato"),
-    path('add_user/', views.add_user, name= "add_user"),
-    path('add_admin/', views.add_admin, name= "add_admin"), 
-    path('validation_user/', views.validation_user, name="validation_user"),
+    #path unicamente para administradores (PageWeb)
+    path('add_admin/', views.reg_admin, name= "add_admin"), 
+    path('add_business/',views.reg_business, name= "reg_business"),
+
+
+    path('login_admin/', views.login_admin, name="login_admin"),
+    
+    path('get-csrf/', views.get_csrf_token, name='get_csrf_token'),
+
+    
+    
+    #path unicacmenete para los clientes vista(Bot)
+    path('add_client/', views.add_client, name= "add_user"),
+    
+    path('validation_user/', views.validate_client, name="validation_user"),
     #Administracion o paginas de pruebas
     
     path('index/', views.index, name='index'),
@@ -52,5 +72,10 @@ urlpatterns = [
     
     path('test/generate_ticket_html/',views.generate_ticket_html, name ="generate_ticket_html"),
     path("checkout_ticket_url/<str:id_business>/<str:id_boleta>/", views.checkout_ticket, name="checkout_ticket"),
+
+    path("create_order/",OrderCreateAPIView.as_view(), name="create_order"),
+    path("remove_order/",OrderCanceledView.as_view(), name="remove_order"),
+    
+    path("dashboard/orders/", OrderDashBoardView.as_view(),name="dashboard-orders")
 ]
 

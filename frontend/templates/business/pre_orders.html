@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>{% block title %}Ordenes{% endblock %}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    
+      {% include "business/navbar.html" %}    
+
+    <!-- Main -->
+    <div class="flex-1 flex flex-col">
+      <!-- Header -->
+      <header class="flex items-center justify-between bg-white shadow px-6 py-4">
+        <div>
+          <h2 class="text-2xl font-semibold">{% block header %}Resumen{% endblock %}</h2>
+          <p class="text-gray-500 text-sm">Bienvenido, {{ request.user.username }}</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <!-- placeholder para notificaciones / avatar -->
+          <div class="relative">
+            <!-- <button class="rounded-full overflow-hidden w-10 h-10 border">
+              <img src="{{ request.user.profile.avatar_url|default:'#' }}" alt="avatar" class="object-cover w-full h-full" />
+            </button> -->
+          </div>
+        </div>
+      </header>
+
+
+
+
+
+
+
+
+
+      <!-- Content -->
+    <main class="p-4 md:ml-64 transition-all duration-300">
+
+        <!-- Métricas -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div class="bg-white p-5 rounded shadow flex items-center">
+            <div class="flex-1">
+              <p class="text-sm text-gray-500">Pre-orders totales</p>
+              <p class="text-2xl font-bold">{{request.session.unique_business.orders}}</p>
+            </div>
+            <div>
+              <!-- icono -->
+              <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 7h18M3 12h18M3 17h18"/>
+              </svg>
+            </div>
+          </div>
+          <div class="bg-white p-5 rounded shadow flex items-center">
+            <div class="flex-1">
+              <p class="text-sm text-gray-500">Ingresos</p>
+              <p class="text-2xl font-bold">S/{{ metrics.revenue }}</p>
+            </div>
+            <div>
+              <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2M12 4v2m0 12v2"/>
+              </svg>
+            </div>
+          </div>
+          <div class="bg-white p-5 rounded shadow flex items-center">
+            <div class="flex-1">
+              <p class="text-sm text-gray-500">Pre-orders pendientes</p>
+              <p class="text-2xl font-bold">{{ metrics.pending_preorders }}</p>
+            </div>
+            <div>
+              <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M12 6a9 9 0 100 18 9 9 0 000-18z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de pre-orders recientes -->
+        <div class="bg-white rounded shadow overflow-hidden">
+          <div class="px-6 py-4 border-b flex justify-between items-center">
+            <h3 class="text-lg font-semibold">Pre-orders recientes</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left table-auto">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">ID</th>
+                  <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                  <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Producto</th>
+                  <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Cantidad</th>
+                  <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Estado</th>
+                  <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Total</th>
+                  <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Creado</th>
+                  <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y">
+                {% for preorder in recent_preorders %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3 text-sm">{{ preorder.id }}</td>
+                  <td class="px-4 py-3 text-sm">{{ preorder.cliente.username }}</td>
+                  <td class="px-4 py-3 text-sm">{{ preorder.producto.nombre }}</td>
+                  <td class="px-4 py-3 text-sm">{{ preorder.cantidad }}</td>
+                  <td class="px-4 py-3 text-sm">
+                    <span class="px-2 py-1 rounded text-xs
+                      {% if preorder.status == 'pending' %}bg-yellow-100 text-yellow-800{% elif preorder.status == 'paid' %}bg-green-100 text-green-800{% elif preorder.status == 'cancelled' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                      {{ preorder.get_status_display }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-sm">S/{{ preorder.precio_total }}</td>
+                  <td class="px-4 py-3 text-sm">{{ preorder.creado_en|date:"SHORT_DATETIME_FORMAT" }}</td>
+                  <td class="px-4 py-3 text-sm">
+                    <a href="{% url 'dashboard-preorder-detail' preorder.id %}" class="text-blue-600 hover:underline">Ver</a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="px-4 py-6 text-center text-gray-500">
+                    No hay pre-orders recientes.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+</body>
+</html>

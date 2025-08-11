@@ -1,0 +1,50 @@
+{# templates/includes/nav.html #}
+<header class="flex items-center justify-between bg-white px-4 py-2 shadow md:hidden">
+    <button id="menuBtn" class="text-2xl">&#9776;</button>
+    <h1 class="text-lg font-semibold">Dashboard</h1>
+</header>
+
+<aside id="sidebar" class="fixed top-0 left-0 w-64 h-full bg-white shadow transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50">
+    <div class="p-4 border-b flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+            <div class="text-sm">
+                <p class="font-medium">name Business</p>
+            </div>
+        </div>
+        <button id="closeBtn" class="md:hidden text-xl font-bold">&times;</button>
+    </div>
+    <nav class="p-4 text-sm space-y-4">
+        <a href="{% url 'account-business-dashboard' %}" class="block w-full text-left px-4 py-2 rounded hover:bg-gray-100 toggleSidebar">Dashboard</a>
+        <a href="{% url 'account-business-preorders' %}" class="block w-full text-left px-4 py-2 rounded hover:bg-gray-100 toggleSidebar">Pre órdenes</a>
+        <a href="{% url 'options' %}" class="block w-full text-left px-4 py-2 rounded hover:bg-gray-100 toggleSidebar">Opciones</a>
+        
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100">Cerrar sesión</button>
+        </form>
+    </nav>
+</aside>
+
+<script>
+    const sidebar = document.getElementById('sidebar');
+    const menuBtn = document.getElementById('menuBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const toggleLinks = document.querySelectorAll('.toggleSidebar');
+
+    menuBtn?.addEventListener('click', () => {
+        sidebar.classList.remove('-translate-x-full');
+    });
+
+    closeBtn?.addEventListener('click', () => {
+        sidebar.classList.add('-translate-x-full');
+    });
+
+    toggleLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    });
+</script>
