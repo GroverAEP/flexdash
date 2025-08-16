@@ -27,6 +27,16 @@ route_account = "account/"
 route_options = "options/"
 route_business= "business/"
 
+#test
+
+def incrementar_contador(request):
+    if request.method == "POST":
+        contador = request.session.get("contador", 0) + 1
+        request.session["contador"] = contador
+        return JsonResponse({"contador": contador})
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
 #registro
 
 def accountAuth(request):
@@ -166,28 +176,28 @@ def optionLogout(request):
 
 
 def accountBusinessDashboard(request):
-    if request.method == "POST":
-        print("metodo post para utilizar")
-        business_id = request.POST.get("business_id")
-        # request.session["select"]
+    # if request.method == "POST":
+    #     print("metodo post para utilizar")
+    #     business_id = request.POST.get("business_id")
+    #     # request.session["select"]
   
-        # return JsonResponse({"OpenBusiness"})    
+    #     # return JsonResponse({"OpenBusiness"})    
     
-        # Aquí puedes procesar business_id, por ejemplo:
+    #     # Aquí puedes procesar business_id, por ejemplo:
         
-        list_business = request.session.get('business', [])
+    #     list_business = request.session.get('business', [])
         
         
         
-        # Buscar negocio por id
-        negocio = next((b for b in list_business if str(b.get('id')) == str(business_id)), None)
-        request.session["unique_business"] = negocio
+    #     # Buscar negocio por id
+    #     negocio = next((b for b in list_business if str(b.get('id')) == str(business_id)), None)
+    #     request.session["unique_business"] = negocio
         
-        if negocio:
-             # Lógica para generar evento con business_id
-             return render(request,f"{route_business}dashboard.html",)
-        else:
-            return JsonResponse({"error": "No se envió business_id"})
+    #     if negocio:
+    #          # Lógica para generar evento con business_id
+    #          return render(request,f"{route_business}dashboard.html",)
+    #     else:
+    #         return JsonResponse({"error": "No se envió business_id"})
     
         
     return render(request, f"{route_business}dashboard.html")

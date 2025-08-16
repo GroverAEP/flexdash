@@ -23,6 +23,15 @@ urlpatterns = [
 
     #options general
     path("options/password_reset",views.optionPassword_reset, name="password_reset"),
-    path("options/logout",views.optionLogout, name="logout")
+    path("options/logout",views.optionLogout, name="logout"),
+    
+    
+    #pago validado
+    # 
+    
+    ##test
+    
+        path("incrementar/", views.incrementar_contador, name="incrementar"),
+
 ]
 

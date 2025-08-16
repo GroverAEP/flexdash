@@ -1,6 +1,8 @@
 
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
+# from django.contrib.auth import User
+
 from django.http import HttpResponse
 
 class AuthContent():
@@ -11,4 +13,5 @@ class AuthContent():
 
     @classmethod
     def reg_user_admin(self,user):
-        user = user.object.create_user
+        # user = user.object.create_user()
+        pass

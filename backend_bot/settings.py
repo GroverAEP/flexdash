@@ -78,7 +78,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'app.core.middleware.LoginRequiredMiddleware',
-    'app.core.middleware.BusinessSessionMiddleware'
+    'app.core.middleware.BusinessSessionMiddleware',
+    'app.core.middleware.ThreadLocalMiddleware'
 ]
 
 REST_FRAMEWORK = {

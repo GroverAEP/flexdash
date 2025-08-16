@@ -9,6 +9,8 @@
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <title>{% block title %}Ordenes{% endblock %}</title>
         <script src="https://cdn.tailwindcss.com"></script>
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 </head>
 <body>
     
@@ -16,39 +18,37 @@
 
     <!-- Main -->
     <div class="flex-1 flex flex-col">
-      <!-- Header -->
-      <header class="flex items-center justify-between bg-white shadow px-6 py-4">
-        <div>
-          <h2 class="text-2xl font-semibold">{% block header %}Resumen{% endblock %}</h2>
-          <p class="text-gray-500 text-sm">Bienvenido, {{ request.user.username }}</p>
-        </div>
-        <div class="flex items-center gap-4">
-          <!-- placeholder para notificaciones / avatar -->
-          <div class="relative">
-            <!-- <button class="rounded-full overflow-hidden w-10 h-10 border">
-              <img src="{{ request.user.profile.avatar_url|default:'#' }}" alt="avatar" class="object-cover w-full h-full" />
-            </button> -->
-          </div>
-        </div>
-      </header>
-
-
-
-
-
-
-
-
-
+      
+      
+      
+      
       <!-- Content -->
-    <main class="p-4 md:ml-64 transition-all duration-300">
+      <main class="p-4 md:ml-64 transition-all duration-300">
+        
+
+        
+        <!-- Header Estadistica Info --> 
+          <div>
+            <h2 class="text-2xl font-semibold">Resumen</h2>
+          </div>
+          <div class="flex items-center gap-4">
+            <!-- placeholder para notificaciones / avatar -->
+            <div class="relative">
+              <!-- <button class="rounded-full overflow-hidden w-10 h-10 border">
+                <img src="{{ request.user.profile.avatar_url|default:'#' }}" alt="avatar" class="object-cover w-full h-full" />
+              </button> -->
+            </div>
+          </div>
+
 
         <!-- Métricas -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div class="bg-white p-5 rounded shadow flex items-center">
             <div class="flex-1">
               <p class="text-sm text-gray-500">Pre-orders totales</p>
-              <p class="text-2xl font-bold">{{request.session.unique_business.orders}}</p>
+              <!-- <p>Total de órdenes: {{ request.session.orders_count|default:0 }}</p> -->
+              <p class="text-2xl font-bold"><span id="orders-count">0</span> </p>
+              <!-- <p class="text-2xl font-bold">{{request.session.unique_business.orders}}</p> -->
             </div>
             <div>
               <!-- icono -->
@@ -58,10 +58,12 @@
               </svg>
             </div>
           </div>
+
+
           <div class="bg-white p-5 rounded shadow flex items-center">
             <div class="flex-1">
-              <p class="text-sm text-gray-500">Ingresos</p>
-              <p class="text-2xl font-bold">S/{{ metrics.revenue }}</p>
+              <p class="text-sm text-gray-500">Ordenes Canceladas</p>
+              <p class="text-2xl font-bold"> <span id="orders-cancelled-count">0</span> </p>
             </div>
             <div>
               <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,10 +72,25 @@
               </svg>
             </div>
           </div>
+
+
           <div class="bg-white p-5 rounded shadow flex items-center">
             <div class="flex-1">
-              <p class="text-sm text-gray-500">Pre-orders pendientes</p>
-              <p class="text-2xl font-bold">{{ metrics.pending_preorders }}</p>
+              <p class="text-sm text-gray-500">ordenes pendientes</p>
+              <p class="text-2xl font-bold"> <span id="orders-pending-count">0</span> </p>
+            </div>
+            <div>
+              <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M12 6a9 9 0 100 18 9 9 0 000-18z"/>
+              </svg>
+            </div>
+          </div>
+          
+          <div class="bg-white p-5 rounded shadow flex items-center">
+            <div class="flex-1">
+              <p class="text-sm text-gray-500">ordenes completadas</p>
+              <p class="text-2xl font-bold"> <span id="orders-completed-count">0</span> </p>
             </div>
             <div>
               <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,7 +102,7 @@
         </div>
 
         <!-- Tabla de pre-orders recientes -->
-        <div class="bg-white rounded shadow overflow-hidden">
+        <!-- <div class="bg-white rounded shadow overflow-hidden">
           <div class="px-6 py-4 border-b flex justify-between items-center">
             <h3 class="text-lg font-semibold">Pre-orders recientes</h3>
           </div>
@@ -132,9 +149,237 @@
               </tbody>
             </table>
           </div>
-        </div>
+        </div> -->
+
+            <div>
+              <h2 class="text-2xl font-semibold">Ordenes</h2>
+              <!-- <p>filtros</p> -->
+            </div>
+            <div class="flex items-center gap-4">
+              <!-- placeholder para notificaciones / avatar -->
+              <div class="relative">
+                <!-- <button class="rounded-full overflow-hidden w-10 h-10 border">
+                  <img src="{{ request.user.profile.avatar_url|default:'#' }}" alt="avatar" class="object-cover w-full h-full" />
+                </button> -->
+              </div>
+            </div>
+
+
+          <div class="space-y-4">
+            <ul id="pending-orders-list">
+              <!-- Aquí JS agregará las órdenes pendientes -->
+            </ul> 
+          </div>
+
+          <!-- <div class="space-y-4">
+             {% for order in request.session.unique_business.orders %}
+          <div class="bg-white shadow rounded-lg p-4 border">
+            <h3 class="font-bold text-lg">Pre-order #{{ order.id }}</h3>
+            
+            <div class="mt-2">
+              <p><span class="font-semibold">Cliente:</span> {{ order.name }}</p>
+              <p><span class="font-semibold">Producto:</span> {{ order.product_name }}</p>
+              <p><span class="font-semibold">Cantidad:</span> {{ order.quantity }}</p>
+              <p><span class="font-semibold">Estado:</span> {{ order.status }}</p>
+              <p><span class="font-semibold">Total:</span> ${{ order.total_amount }}</p>
+              <p><span class="font-semibold">Creado:</span> {{ order.date|date:"Y-m-d H:i" }}</p>
+            </div>
+
+            <div class="mt-4 flex gap-2">
+              <form action="" method="post" class="flex-1">
+                {% csrf_token %}
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg">
+                  Orden pagada
+                </button>
+              </form>
+              <form action="" method="post" class="flex-1">
+                {% csrf_token %}
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg">
+                  Orden cancelada
+                </button>
+              </form>
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-gray-500">No hay pre-órdenes disponibles.</p>
+          {% endfor %} -->
+
+  <!-- Más órdenes aquí... -->
+      </div>
 
       </main>
     </div>
 </body>
 </html>
+
+
+<script>
+    // const businessId = "{{request.session.unique_business.id}}";  // Ejemplo: podría ser {{ user.id }}, localStorage, etc.
+    // const businessId = document.getElementById("orders-container").dataset.businessId;
+    console.log("{{ request.session.unique_business.id }}")
+    const container = document.getElementById("pending-orders-list");
+    container.innerHTML = `<p class="text-gray-500">No hay pre-órdenes disponibles.</p>`;
+    // inicializar pordefecto antes 
+
+    // despues de ejecutarse event
+
+    
+    
+    
+  //obtener el csfrtoken
+      function getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        }
+
+
+    const validatedPaymentURL = "{% url 'validated-payment' %}";
+    const csrfToken = "{{ csrf_token }}";
+    const nextUrl  = "{{ request.get_full_path }}"
+
+
+
+    const infoPending ={}
+    const eventSource = new EventSource("{% url 'orders_stream' request.session.unique_business.id %}");
+    
+    // 📌 Evento cuando se abre la conexión correctamente
+    eventSource.onopen = function() {
+        console.log("Conexión SSE establecida correctamente");
+        container.innerHTML = `<p class="text-gray-500">Cargando órdenes...</p>`;
+      };
+      
+      console.log(eventSource.OPEN)
+      console.log(eventSource.CLOSED)
+      
+      console.log(eventSource.readyState)
+      if (eventSource.readyState == eventSource.CONNECTING){
+        console.log("ejecutandose ")
+
+      // return;
+    }
+
+
+
+  eventSource.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        const ordersCountElem = document.getElementById("orders-count");
+        const ordersPendingCountElem = document.getElementById("orders-pending-count");
+        const ordersCancelledCountElem = document.getElementById("orders-cancelled-count");
+        const ordersCompletedCountElem = document.getElementById("orders-completed-count");
+        
+        const earnTodayElem =  document.getElementById("earn-today");
+
+        console.log(data.pending.length)
+
+        console.log(data)
+        if (ordersCountElem) {
+          console.log(ordersCountElem)
+          ordersCountElem.textContent = data.total.length;
+          ordersPendingCountElem.textContent = data.pending.length;
+          ordersCancelledCountElem.textContent = data.cancelled.length;
+          ordersCompletedCountElem.textContent = data.completed.length;
+          
+          // earnTodayElem.textContent = data.earn_today;
+            
+        }
+
+
+          // Cargo de Ordenes pendinetes
+          const container = document.getElementById("pending-orders-list");
+          container.innerHTML = ""; // limpiar antes de volver a renderizar
+
+    if (data.pending.length === 0) {
+        container.innerHTML = `<p class="text-gray-500">No hay pre-órdenes disponibles.</p>`;
+        return;
+    }
+     if (!data.pending || data.pending.length === 0) {
+        container.innerHTML = `<p class="text-gray-500">No hay órdenes pendientes.</p>`;
+        return;
+    }
+
+    // Renderizar órdenes
+    data.pending.forEach(order => {
+        const card = document.createElement("div");
+        card.className = "bg-white shadow rounded-lg p-4 border";
+        card.innerHTML = `
+            <h3 class="font-bold text-lg">Pre-order #${order.id}</h3>
+            <div class="mt-2">
+              <p><span class="font-semibold">Cliente:
+                <div class="ml-4 mt-1">
+                  </span>- ${order.client.first_name}</p>
+                  </span>- ${order.client.phone}</p>
+                  </span>- ${order.client.email}</p>
+                  
+                </div>
+              <p><span class="font-semibold">Carrito:
+                <div class="ml-4 mt-1">
+                    ${order.carts.items.map(item => `
+                      <p>- ${item.name} (x${item.quantity}) -  S/.${item.price}</p>
+                    `).join("")}
+                    
+                  </div>
+                
+                </p>
+              <p><span class="font-semibold">Estado:</span> ${order.status}</p>
+              <p><span class="font-semibold">Total:</span> S/.${order.total_amount}</p>
+              <p><span class="font-semibold">Creado:</span> ${new Date(order.date).toLocaleString()}</p>
+            </div>
+            <div class="mt-4 flex gap-2">
+               <form action="${validatedPaymentURL}" method="post" class="flex-1">
+                <input type="hidden" name="next" value="${nextUrl}">
+                <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                <input type="hidden" name="order" value='${JSON.stringify(order)}'>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg">
+                  Orden pagada
+                </button>
+              </form>
+
+              <form action={% url 'validated-payment' %}  method="post" class="flex-1">
+                <input type="hidden" name="next" value="${nextUrl} ">
+
+                <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+
+                <input type="hidden" name="order" value="${order}">
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg">
+                  Orden cancelada
+                </button>
+              </form>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+
+    };
+
+
+    // eventSource.onmessage = function(event) {
+    //     const data = JSON.parse(event.data);
+    //     console.log("Órdenes actualizadas:", data);
+    //     document.getElementById("orders-container").innerText = JSON.stringify(data, null, 2);
+    // };
+
+    eventSource.onerror = function() {
+        console.error("Error en la conexión SSE");
+    };
+</script>
+
+
+
+
+<script>
+document.getElementById("btnIncrementar").addEventListener("click", function() {
+    fetch("{% url 'incrementar' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.contador !== undefined) {
+            document.getElementById("contador").textContent = data.contador;
+        }
+    });
+});
+</script>

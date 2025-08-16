@@ -4,58 +4,88 @@ import json
 from datetime import datetime
 import uuid
 
-class BusinessContent():
-    
+class BusinessManager():
     @classmethod
     def reg_business(self,idAdmin,serializable):
-        # def add_user(self, serializable:json):
-        collection ,conexion= BDConnection.conexion_admin_mongo()
+        collection, conexion = BDConnection.conexion_business_mongo()
         
-        print("Campo-SEriizable")
-        # print(serializable)
-        print("Campo-SEriizable")
+        #Colocando el id_admin: Enel serializable
+        print(idAdmin)
         
-        # for business in serializable["business"]:
+        serializable["id_admin"] = str(idAdmin)
+        
+        #GENERO LA IDENTIFICACION UUID
         serializable["id"] = str(uuid.uuid4())
-        serializable["date"] = datetime.now()
+        #GENERO LA FECHA DE AHORA
+        serializable["date"] = datetime.now().isoformat()
+
+        # serializable["customers"]
+
+        # print(collection.find_one({"id_admin": str(idAdmin)}))
         
-        # serializable["id"] = str(uuid.uuid5(uuid.NAMESPACE_DNS,"email"))
-        serializable["date"] = datetime.now()
-
-        print(collection.find_one({"id": str(idAdmin)}))
-        print(str(idAdmin))
-
-        collection.update_one(
-            {"id":str(idAdmin)},
-            {
-                "$push":{
-                    "business":serializable
-                    
-                }
-            }
-        )
-
-        # collection.insert_one(serializable)
+        #VERIFICO SI EL NEGOCIO ESTA GENERADO CON ALGUN OTRO
+        # if collection.find_one({"id_admin": str(idAdmin)}):
         
+        print(serializable)
+        # json_string = json.dumps(serializable)
 
+
+        collection.insert_one(serializable) 
+        
         conexion.close()
+    
+    
+    # @classmethod
+    # def reg_business(self,idAdmin,serializable):
+    #     # def add_user(self, serializable:json):
+    #     collection ,conexion= BDConnection.conexion_admin_mongo()
+        
+    #     print("Campo-SEriizable")
+    #     # print(serializable)
+    #     print("Campo-SEriizable")
+        
+    #     # for business in serializable["business"]:
+    #     serializable["id"] = str(uuid.uuid4())
+    #     serializable["date"] = datetime.now()
+        
+    #     # serializable["id"] = str(uuid.uuid5(uuid.NAMESPACE_DNS,"email"))
+    #     serializable["date"] = datetime.now()
+
+    #     print(collection.find_one({"id": str(idAdmin)}))
+    #     print(str(idAdmin))
+
+    #     collection.update_one(
+    #         {"id":str(idAdmin)},
+    #         {
+    #             "$push":{
+    #                 "business":serializable
+                    
+    #             }
+    #         }
+    #     )
+
+    #     # collection.insert_one(serializable)
+        
+
+    #     conexion.close()
     
     @classmethod
     def get_list_business_id(self,idAdmin:str):
         try:
-            collection, conexion = BDConnection.conexion_admin_mongo() 
-            doc = collection.find_one(
-                {"id": idAdmin},
-                {"_id": 0, "business": 1}
+            collection, conexion = BDConnection.conexion_business_mongo() 
+            list_business = collection.find(
+                {"id_admin": idAdmin},
+                {"_id": 0}
             )
             
-            print(doc)
+            # print(doc)
             
-            list_business = doc.get("business", []) if doc else []
+            # list_business = doc.get("business", []) if doc else []
             print(list_business)
-                        
+            # docs_list = list(docs)
+
             # Convierte datetimes a str automáticamente
-            doc_str = json.loads(json.dumps(list_business, default=str))
+            doc_str = json.loads(json.dumps(list(list_business), default=str))
             print(doc_str)
             
             print(doc_str)
@@ -82,8 +112,9 @@ class BusinessContent():
     @classmethod
     def get_business_id(self, idBusiness):
         try:
-            collection, conexion = BDConnection.conexion_admin_mongo() 
-            doc = collection.find_one({"idAdmin":id,},{"_id": 0})
+            collection, conexion = BDConnection.conexion_business_mongo() 
+            doc = collection.find_one({"id":idBusiness,},{"_id": 0})
+            
             
             # Convierte datetimes a str automáticamente
             doc_str = json.loads(json.dumps(doc, default=str))

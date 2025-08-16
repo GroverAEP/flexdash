@@ -1,8 +1,14 @@
 from django.contrib import admin
 from django.urls import path
 from app.views import views
-from app.views.order import OrderCreateAPIView,OrderCanceledView,OrderDashBoardView
+from app.views.order import OrderCreateAPIView,OrderCanceledView,OrderDashBoardView,OrderGetList
+from app.views.dashboard import DashboardInfoTimeRealDay
+from app.views.payment import PaymentProcess
+
+from app.content.orders import OrdersManager
+
 #separo la vista en 2 
+from app.views.stream import orders_stream_view
 
 #Admin
 #client
@@ -37,6 +43,12 @@ urlpatterns = [
     
     path('index/', views.index, name='index'),
     # path('generar_imagen/', views.generate_image, name="generate_image")   
+    
+    
+    #PAGO VALIDADO
+    
+    path('validated/', PaymentProcess.as_view(),name="validated-payment"),
+    
     
     
 
@@ -76,6 +88,15 @@ urlpatterns = [
     path("create_order/",OrderCreateAPIView.as_view(), name="create_order"),
     path("remove_order/",OrderCanceledView.as_view(), name="remove_order"),
     
-    path("dashboard/orders/", OrderDashBoardView.as_view(),name="dashboard-orders")
+    path("dashboard/orders/", OrderDashBoardView.as_view(),name="dashboard-orders"),
+
+
+    #
+    path("orders/count/", OrderGetList.as_view(), name="orders_count"),
+
+    path("analytics/orders",DashboardInfoTimeRealDay.as_view(), name="orders_analytics" ),
+
+    path("orders/stream/<uuid:business_id>/", orders_stream_view, name="orders_stream"),
+
 ]
 

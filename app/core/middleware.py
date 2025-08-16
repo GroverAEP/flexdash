@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from datetime import datetime
 from app.conexion import BDConnection
 from app.content.orders import OrdersManager
+from app.content.business import BusinessManager
 
 class LoginRequiredMiddleware:
     """
@@ -63,31 +64,67 @@ class BusinessSessionMiddleware:
             '/options/',
         ]
 
-    def __call__(self, request):
-        path = request.path
-
-        print(path)
-    def __init__(self, get_response):
-        self.get_response = get_response
 
     def __call__(self, request):
         path = request.path
+        
+          # Si ya existe en sesión, no hacemos nada
 
+        if request.session.get("unique_business"):
+            print("existe_ unique _:busniess")
+            return self.get_response(request)
+        
         if path.startswith('/business/'):
+           
+           
             # Si viene business_id en POST, guardarlo en sesión
+           
+            print("llamado al midleware")
+            print("si no existe business_id")
+            business_id = None
             if request.method == "POST":
                 business_id = request.POST.get("business_id")
+            elif request.method == "GET":
+                print(business_id)
+                business_id = request.GET.get("business_id")
+                print(business_id)
+
+            # Si viene un ID nuevo, lo guardamos en sesión
+            if business_id:
+                print("llamado - guardo sesion")
                 list_business = request.session.get('business')
                 if list_business:
-                    negocio = next((b for b in list_business if str(b.get('id')) == str(business_id)), None)
-                    request.session['unique_business'] = negocio
+                    #encuentro el negocio por id
+                    negocio = BusinessManager.get_business_id(idBusiness=business_id)
                     print(negocio)
-                    request.session['unique_business']["status"] = self.setStatusTime(open_time=negocio["time_zone"]["time_open"], close_time=negocio["time_zone"]["time_close"])
-                    request.session['unique_business']["orders"] = self.get_list_orders(idBusiness=negocio["id"])
-        else:
-            # Si no estás en /business/, borrar business_id de sesión
-            if 'unique_business' in request.session:
-                del request.session['unique_business']
+                    # negocio = next((b for b in list_business if str(b.get('id')) == str(business_id)), None)
+                    if negocio:
+                        print("guardamos el negocio en sesion")
+                        request.session['unique_business'] = negocio
+                        # print(negocio.get(["time_zone"],"noexiste"))
+                        request.session['unique_business']["status"] = self.setStatusTime(
+                            open_time=negocio["time_zone"]["time_open"],
+                            close_time=negocio["time_zone"]["time_close"]
+                        )
+                        request.session['unique_business']["orders"] = self.get_list_orders(
+                            idBusiness=negocio["id"]
+                        )
+
+            # Si estás en una de las rutas permitidas y ya hay negocio en sesión, recarga datos
+            elif path in self.allowed_paths and 'unique_business' in request.session:
+                print("recarga de datos")
+                negocio = request.session['unique_business']
+                request.session['unique_business']["status"] = self.setStatusTime(
+                    open_time=negocio["time_zone"]["time_open"],
+                    close_time=negocio["time_zone"]["time_close"]
+                )
+                request.session['unique_business']["orders"] = self.get_list_orders(
+                    idBusiness=negocio["id"]
+                )
+
+        # Si sales de las rutas permitidas, borramos
+        elif 'unique_business' in request.session:
+            del request.session['unique_business']
 
         response = self.get_response(request)
         return response
@@ -97,8 +134,8 @@ class BusinessSessionMiddleware:
     #     AnalyticsOrders.get
     
     def get_list_orders(self,idBusiness:str):
-       return OrdersManager.get_list_orders(idBusiness=idBusiness),
-    
+              return OrdersManager.get_list_orders_id(idBusiness=idBusiness)
+
       
     @classmethod  
     def setStatusTime(self, open_time: str, close_time: str):
@@ -127,7 +164,7 @@ class BusinessSessionMiddleware:
         #Obtener la bd  
         collection, conexion = BDConnection.conexion_order_mongo()
         
-        OrdersManager.get_list_orders()
+        OrdersManager.get_list_orders_id()
         #unico archivo con cada una de las ordenes de un negocio
         {
             "id_business": "",
@@ -183,3 +220,38 @@ class BusinessSessionMiddleware:
         
         
         conexion.close()
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import threading
+
+_thread_locals = threading.local()
+
+def get_current_request():
+    return getattr(_thread_locals, "request", None)
+
+class ThreadLocalMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        _thread_locals.request = request
+        response = self.get_response(request)
+        return response

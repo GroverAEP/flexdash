@@ -39,87 +39,89 @@ class ClientContent():
         collection, conexion = BDConnection.conexion_client_mongo()
         
         #creacion del modelo
-        user = ClientUser.objects.create(
-            # id = serializable["idClient"],
-            full_name= serializable["full_name"],
-            first_name = serializable["first_name"],
-            last_name = serializable["last_name"],
-            country = serializable["country"],
-            email = serializable["email"],
-            phone = serializable["phone"],
-        )
+        # user = ClientUser.objects.create(
+        #     # id = serializable["idClient"],
+        #     full_name= serializable["full_name"],
+        #     first_name = serializable["first_name"],
+        #     last_name = serializable["last_name"],
+        #     country = serializable["country"],
+        #     email = serializable["email"],
+        #     phone = serializable["phone"],
+        # )
 
-        follow_business_list = []
-        if "follow_business" in serializable and serializable["follow_business"]:
-            for fb in serializable["follow_business"]:
+        # follow_business_list = []
+        # if "follow_business" in serializable and serializable["follow_business"]:
+        #     for fb in serializable["follow_business"]:
                
-                follow_business = FollowBusiness.objects.create(
-                    clientUser=user,
-                    id_conversation=fb["id_conversation"],
-                    type=fb["type"]
-                )
+        #         follow_business = FollowBusiness.objects.create(
+        #             clientUser=user,
+        #             id_conversation=fb["id_conversation"],
+        #             type=fb["type"]
+        #         )
                 
-                print(follow_business)
-                print(fb)
-                print(fb.get("cart_payment"))
+        #         print(follow_business)
+        #         print(fb)
+        #         print(fb.get("cart_payment"))
                 
-                if "cart_payment" in fb:
-                    # print("true")
-                    print()
-                    print(fb.get("cart_payment")['cart_status'])
-                    cartp = fb.get("cart_payment")
-                    cart_payment = CartPayment.objects.create(
-                        followBusiness = follow_business,
-                        cart_status = cartp['cart_status'],    
-                    )
+        #         if "cart_payment" in fb:
+        #             # print("true")
+        #             print()
+        #             print(fb.get("cart_payment")['cart_status'])
+        #             cartp = fb.get("cart_payment")
+        #             cart_payment = CartPayment.objects.create(
+        #                 followBusiness = follow_business,
+        #                 cart_status = cartp['cart_status'],    
+        #             )
                     
-                    if "cart" in cartp:
-                        carter = cartp.get("cart")
+        #             if "cart" in cartp:
+        #                 carter = cartp.get("cart")
                         
-                        cart = Cart.objects.create(
-                            cartPayment = cart_payment,
-                            total_price = carter['total_price']
-                        )
+        #                 cart = Cart.objects.create(
+        #                     cartPayment = cart_payment,
+        #                     total_price = carter['total_price']
+        #                 )
                         
-                        print("cart")
-                        print(carter)
-                        if "products" in carter:
-                            for prod in carter.get("products"):
-                                print("productos : --")
-                                print(prod)
-                                products = Products.objects.create(
-                                    cart = cart,
-                                    name = prod['name'],
-                                    type = prod['type'],
-                                    amount = int(prod['amount']),
-                                    price = prod['price'],
-                                )
+        #                 print("cart")
+        #                 print(carter)
+        #                 if "products" in carter:
+        #                     for prod in carter.get("products"):
+        #                         print("productos : --")
+        #                         print(prod)
+        #                         products = Products.objects.create(
+        #                             cart = cart,
+        #                             name = prod['name'],
+        #                             type = prod['type'],
+        #                             amount = int(prod['amount']),
+        #                             price = prod['price'],
+        #                         )
 
                     
-                #     print(cart_payment)
+        #         #     print(cart_payment)
                     
-            follow_business_list.append({
-                "id_conversation": follow_business.id_conversation,
-                "type": follow_business.type
-            })
-        else:
+        #     follow_business_list.append({
+        #         "id_conversation": follow_business.id_conversation,
+        #         "type": follow_business.type
+        #     })
+        # else:
             
-            print("No hay follow_business o está vacío.")
+        #     print("No hay follow_business o está vacío.")
                             
 
-        print(user)
+        # print(user)
         
-        clientUserSerizable = ClientUserSerializer(user)
-        json_data_client = clientUserSerizable.data
+        # clientUserSerizable = ClientUserSerializer(user)
+        # json_data_client = clientUserSerizable.data
         
-        print("User")
-        print(clientUserSerizable)
-        print(clientUserSerizable.data)
-        print(serializable["follow_business"])
+        # print("User")
+        # print(clientUserSerizable)
+        # print(clientUserSerizable.data)
+        # print(serializable["follow_business"])
         
+        serializable["id"] = str(uuid.uuid4())
         
+        serializable["date"] = datetime.now().isoformat()
 
-        collection.insert_one(json_data_client)
+        collection.insert_one(serializable)
         conexion.close()
 
 

@@ -18,6 +18,12 @@ class BDConnection:
         return client
 
     @classmethod
+    def conexion_business_mongo(cls):
+        conexion = cls.connection_mongo()
+        collection = conexion['vlexWay']
+        return collection['business'], conexion
+
+    @classmethod
     def conexion_client_mongo(cls):
         conexion = cls.connection_mongo()
         collection = conexion['vlexWay']

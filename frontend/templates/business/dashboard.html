@@ -64,9 +64,9 @@
         <!-- {{request.session.unique_business}} -->
         <!-- {{business}} -->
        <!-- Main -->
-    <main class="p-4 md:ml-64 transition-all duration-300">
+    <main class="px-2 py-4 md:ml-64 transition-all duration-300">
         <!-- Card business -->
-        <div class="bg-primary rounded-2xl border border-black p-6 mb-6 flex flex-col sm:flex-row justify-between items-center shadow">
+        <div class="bg-primary rounded-2xl border flex  flex-col sm:flex-row justify-between items-center shadow">
             <div class="space-y-1 text-center sm:text-left">
                 <h2 class="text-xl font-bold">Negocio: <span class="text-gray-700">{{request.session.unique_business.name}}</span></h2>
                 <!-- <p class="text-gray-600">Total Órdenes: 152</p>
@@ -74,7 +74,14 @@
                 <p class="text-gray-600">Ganancias este mes: S/ 3,200</p>
                 <p class="text-green-600 font-semibold">Estado: {{request.session.unique_business.status}}</p>
             </div>
-            <div class="w-24 h-24 bg-gray-300 rounded-full mt-4 sm:mt-0"></div>
+               <!-- <div class="w-24 h-24 bg-gray-300 rounded-full mt-4 sm:mt-0"></div> -->
+        </div>
+
+        <!-- Graficas -->
+        
+        <!-- 📊 Gráfico -->
+        <div class="chart-container w-full h-96 mb-6">
+        <canvas id="gananciaChart"></canvas>
         </div>
 
 
@@ -83,11 +90,12 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div class="bg-white shadow rounded p-4">
                 <h3 class="text-sm text-gray-500">Órdenes hoy</h3>
-                <p class="text-2xl font-bold">24</p>
+                <!-- <p class="text-2xl font-bold">{{ request.session.unique_business.orders | length }}</p> -->
+                <p class="text-2xl font-bold"><span id="orders-count">0</span></p>
             </div>
             <div class="bg-white shadow rounded p-4">
                 <h3 class="text-sm text-gray-500">Ganancias hoy</h3>
-                <p class="text-2xl font-bold">S/ 540</p>
+                <p class="text-2xl font-bold">S/ <span id= "earn-today">0</span> </p>
             </div>
             <div class="bg-white shadow rounded p-4">
                 <h3 class="text-sm text-gray-500">Clientes nuevos</h3>
@@ -95,6 +103,10 @@
             </div>
         </div>
         
+        <div>
+            
+        </div>
+
         
         
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -105,10 +117,45 @@
         </div>
 
 
+    <!-- 📌 Código para el gráfico -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 
     </main>
+
+
+
+
+<script>
+  const ctAx = document.getElementById('gananciaChart').getContext('2d');
+
+  new Chart(ctAx, {
+    type: 'bar', // Puedes cambiar a 'line' si quieres gráfico lineal
+    data: {
+      labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio','Julio','Agosto'], // Meses
+      datasets: [{
+        label: 'Ganancia (USD)',
+        data: [8500, 9200, 7800, 10000, 9500, 11000], // Ganancia por mes
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+
+
+
 
     <!-- JS Toggle -->
     <script>
@@ -138,5 +185,113 @@
             }
         });
     </script>
+
+
+
+<script>
+    function updateCustomers() {
+        
+        
+    }
+</script>
+
+<script>
+    function updateEarnList(){
+
+    }
+</script>
+
+<!-- 
+<script>
+
+function updateOrdersCount() {
+    // Obtener el ID (ajusta según cómo lo obtengas)
+    const id = "{{request.session.unique_business.id}}";  // Ejemplo: podría ser {{ user.id }}, localStorage, etc.
+    
+    console.log(id)
+    fetch("{% url 'orders_analytics' %}", {
+        method: "POST",
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'  // Necesario para Django CSRF protection
+        },
+        body: JSON.stringify({ id: id })  // Envía el ID en el cuerpo como JSON
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error en la respuesta del servidor');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Respuesta del servidor:", data);
+
+        if (typeof data.total !== "undefined") {
+            
+            // definir la informacion obtenida
+            document.getElementById("earn-today").textContent = data.earn_today
+            document.getElementById("orders-count").textContent = data.total.length;
+        } 
+        else if (typeof data.count !== "undefined") {
+            document.getElementById("orders-count").textContent = data.count;
+        } 
+        else {
+            console.warn("Formato inesperado de datos:", data);
+        }
+    })
+    .catch(error => {
+        console.error("Error obteniendo órdenes:", error);
+    });
+}
+
+// Ejecutar al cargar
+updateOrdersCount();
+
+// Actualizar cada 5 segundos
+setInterval(updateOrdersCount, 5000);
+</script> -->
+<script>
+    // const businessId = "{{request.session.unique_business.id}}";  // Ejemplo: podría ser {{ user.id }}, localStorage, etc.
+    // const businessId = document.getElementById("orders-container").dataset.businessId;
+    const eventSource = new EventSource("{% url 'orders_stream' request.session.unique_business.id %}");
+
+    eventSource.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        const ordersCountElem = document.getElementById("orders-count");
+        const earnTodayElem =  document.getElementById("earn-today");
+
+        console.log(data.earn_today)
+
+        console.log(data)
+        if (ordersCountElem) {
+            earnTodayElem.textContent = data.earn_today;
+            ordersCountElem.textContent = data.total.length;
+        }
+    };
+
+
+    // eventSource.onmessage = function(event) {
+    //     const data = JSON.parse(event.data);
+    //     console.log("Órdenes actualizadas:", data);
+    //     document.getElementById("orders-container").innerText = JSON.stringify(data, null, 2);
+    // };
+
+    eventSource.onerror = function() {
+        console.error("Error en la conexión SSE");
+    };
+</script>
+
 </body>
 </html>
+
+
+
+<script>
+
+     function updaerBusinessDashboard(params) {
+        
+
+     }
+
+</script>

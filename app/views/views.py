@@ -22,7 +22,7 @@ from django.core import serializers
 import uuid
 from app.content.api import ClientContent, CalContent,PayMethodContent,TestContent,TicketsContent,utilsContent,LoadContent
 from app.content.file import FileContent
-from app.content.business import BusinessContent
+from app.content.business import BusinessManager
 from app.content.admin import AdminContent
 from app.content.auth  import AuthContent
 
@@ -139,13 +139,14 @@ def reg_business(request):
         id_admin = request.headers.get('Id-Admin')
         print(id_admin)
         data = json.loads(request.body)
-        response = BusinessContent.reg_business(id_admin, data)
+        response = BusinessManager.reg_business(id_admin, data)
                 
         if data :
             return JsonResponse({
             'status': 200,
             'response': {
-                "data":data
+                "message":"Datos sunidos correctamente"
+                # "data": data
                 },
             # "title": "Datos subidos desde body a la BD"
         }, status=201)

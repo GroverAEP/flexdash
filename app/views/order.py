@@ -41,6 +41,26 @@ class OrderCanceledView(APIView):
         except Exception as e: 
             return JsonResponse({"error": str(e)}, status= status.HTTP_400_BAD_REQUEST)
 
+class OrderGetList(APIView):
+    def post(self,request):
+        try:
+             # Opción 1: Si el ID viene en el JSON del body
+            data = request.data  # DRF ya parsea el JSON automáticamente
+            id_business = data.get("id")
+            
+            # Opción 2: Si prefieres leer el body manualmente (no recomendado con DRF)
+            # raw_data = json.loads(request.body)
+            # id_business = raw_data.get("id")
+
+            if not id_business:
+                return Response({"error": "ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            response = OrdersManager.get_list_orders(idBusiness=id_business)
+
+            return JsonResponse(response,safe=False)
+        except Exception as e:
+            return JsonResponse({ "error": str(e)})
+
 
 class OrderDashBoardView(APIView):
     def get(self,request):
