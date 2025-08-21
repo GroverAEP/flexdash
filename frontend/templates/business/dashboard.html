@@ -266,7 +266,7 @@ setInterval(updateOrdersCount, 5000);
         console.log(data)
         if (ordersCountElem) {
             earnTodayElem.textContent = data.earn_today;
-            ordersCountElem.textContent = data.total.length;
+            ordersCountElem.textContent = data.status_summary.total;
         }
     };
 

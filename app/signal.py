@@ -14,6 +14,8 @@ from django.dispatch import receiver
 # from .thread_local import get_current_request
 from datetime import datetime, timedelta
 
+from app.views.stream import StreamOrder
+
 from app.core.middleware import get_current_request
 #crear usuario profile
 @receiver(post_save, sender=User)
@@ -91,6 +93,11 @@ def update_session_on_create(sender, instance, created, **kwargs):
             orders_count = Order.objects.count()
             request.session['orders_count'] = orders_count
             request.session.modified = True
+        
+            
+            stream = StreamOrder()
+            stream.notify_stream()
+            
 
 @receiver(post_delete, sender=Order)
 def update_session_on_delete(sender, instance, **kwargs):

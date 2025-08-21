@@ -9,6 +9,7 @@ from app.content.orders import OrdersManager,AnalyticsOrders
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from app.conexion import BDConnection
+from django.utils import timezone
 
 
 class PaymentProcess(APIView):
@@ -21,45 +22,16 @@ class PaymentProcess(APIView):
         
         #o talvez traiga la infomracionc directamente
         try:
+            
+            
             order_json = request.POST.get('order')
             next_url = request.POST.get("next")
             order_data = json.loads(order_json)      # lo conviertes a dict
-            print(next_url)
-            print(order_data)
-            #cambia la informacion , a
-            order_data['status'] = "completed"
-            
-            print(order_data["id"])
-            
-            order = Order.objects.get(id=order_data["id"])
-            order.status = order_data["status"]
-            # order.total = order_data["total"]
-            # order.date = order_data["date"]
-            order.save()      
-            # # if id_order:
-            
-            #deberia de subir los datos al servidor cuando ya esten completados? 
-            #deberia de los datos esperarse a que el dia termine para recien subirse al servidor?
-            
-            
-            
-            # -- proceso de boleta electronica    
-            
-            
-            # -- proceso subir orden completada la base de datos
-            # -- subir a la base de datos cuando termine el dia
-             
-            # collection, conexion  = BDConnection.conexion_order_mongo()
-            
-            # result =collection.insert_one(order_data)
-            
-            # if result.inserted_id:
-            #     Order.objects.filter(id= order_data.id).delete()
+           
+            OrdersManager.validated_order_process(id_order=order_data["id"] , data=order_data)
 
-            
-            # conexion.close()
 
-            return redirect("home")   # redirige a la URL con name="home"
+            return JsonResponse({"redirect": next_url})
 
 
             # return JsonResponse({
@@ -69,3 +41,45 @@ class PaymentProcess(APIView):
             return JsonResponse({"error": str(e)})
     def get(self,request):
         return JsonResponse({"error": "metodo no valido"})
+    
+
+class PaymentCancelled(APIView):
+    def post(self,request):
+            
+        try:
+            order_json = request.POST.get('order')
+            next_url = request.POST.get("next")
+            
+            reason = request.POST.get("reason")
+            
+            order_data = json.loads(order_json)      # lo conviertes a dict 
+            
+            # aseguramos que carts existe y es dict
+            carts = order_data.get("carts", {})
+
+            order_data["status"] = "cancelled"
+            # agregamos el campo reason
+            carts["reason"] = str(reason)
+
+            # actualizamos la orden
+            order = Order.objects.get(id=order_data["id"])
+            order.status = order_data["status"]
+            order.carts = carts
+            order.save()
+
+                        
+            
+            # order_json["reason"] = {}
+            # guardo como prueab
+            
+            #actualiza la orden el objeto
+            order = Order.objects.get(id=order_data["id"])
+            order.status = order_data["status"]
+            order.carts = order_data["carts"]["reason"]
+            # order.date = order_data["date"]
+            order.save()
+            
+            
+            return redirect(next_url)
+        except Exception as e:
+            return JsonResponse({"error": str(e)})

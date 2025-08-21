@@ -13,6 +13,7 @@ from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest, File
 from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie,requires_csrf_token
 
 
+from app.content.orders import OrdersManager
 
 
 from django.core import serializers
@@ -378,7 +379,9 @@ def add_catalog(request):
             )
     return JsonResponse({"status":400,"error":"Error dentro del codigo"},status=400)
 
-
+def upload_orders_view(request):
+    OrdersManager.upload_orders()
+    return JsonResponse({"status": "ok"})
 
 
             

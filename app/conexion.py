@@ -40,3 +40,14 @@ class BDConnection:
         conexion = cls.connection_mongo()
         collection = conexion['vlexWay']
         return collection['orders'], conexion
+    
+
+class ConexionOrderCache:
+    _collection = None
+    _conexion = None
+
+    @classmethod
+    def get_collection(cls):
+        if cls._collection is None:
+            cls._collection, cls._conexion = BDConnection.conexion_order_mongo()
+        return cls._collection

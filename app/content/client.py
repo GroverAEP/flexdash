@@ -4,12 +4,14 @@ class ClientManager():
     
     def __init__(self,id_client):
         self.id_client = id_client
+        self.collection, self.conexion = BDConnection.conexion_client_mongo()
+
     
     
     def get_client_id(self):
-        collection, conexion = BDConnection.conexion_client_mongo()
+        # collection, conexion = BDConnection.conexion_client_mongo()
         
-        client = collection.find_one({"id": self.id_client})
+        client = self.collection.find_one({"id": self.id_client})
         
         if client:
             #determino que datos me va adevolver, solamente,
@@ -23,3 +25,6 @@ class ClientManager():
             
             return response
         
+
+    def close(self):
+        self.conexion.close()

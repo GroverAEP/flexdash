@@ -6,10 +6,11 @@ from app.models import Order
 from django.utils import timezone
 import uuid 
 
-from app.conexion import BDConnection
+from app.conexion import BDConnection , ConexionOrderCache
 from app.serializers import OrderSerializer
 from app.content.client import ClientManager
 from decimal import Decimal
+from uuid import UUID
 
 
 class OrdersManager:
@@ -21,14 +22,109 @@ class OrdersManager:
         self.lock = Lock()
 
     @classmethod
+    def validated_order_process(cls,id_order:str,data:dict):
+        try:
+            #primero identificamos si la orden es pasada o de hoy
+            update_data = {
+                    "status":"completed",
+                    "update_data": timezone.now().isoformat()
+            }
+            
+            print("COMPROVANDO VALIDATEORDER")
+            print(Order.objects.filter(id=UUID(id_order)).exists())
+            print(Order.objects.filter(id=id_order).exists())
+            
+            if Order.objects.filter(id=UUID(id_order)).exists():
+                data["status"] = "completed"
+                data["update_date"] = timezone.now().isoformat()
+                
+                
+                cls.upload_order_completed(id_order=id_order,upload_data=data)
+                
+                Order.objects.filter(id=id_order).delete()
+            else:
+                cls.update_order_status(id_order=id_order,update_data=update_data)
+                
+        
+        except Exception as e:
+            print("🔥 Error en PaymentProcess:", e)            
+
+    @classmethod
+    def upload_order_completed(cls,id_order, upload_data):
+        
+        try:
+            collection, conexion = BDConnection.conexion_order_mongo()
+
+            # 🔹 Actualizamos la orden por su id
+            result = collection.insert_one(upload_data)
+                # {"id": str(id_order)},      # filtro por id
+                # {"$set": update_data}       # campos a actualizar
+            
+            if result.inserted_id:
+                print(f"✅ Orden {id_order} insertada correctamente en Mongo con _id {result.inserted_id}")
+            else:
+                print(f"⚠️ No se pudo insertar la orden {id_order}")
+
+            conexion.close()
+
+            # Opcional: eliminar la orden de algún lugar temporal si aplica
+            # cls.remove_order(order_id=order_id)
+
+        except Exception as e:
+            print("🔥 Error en PaymentProcess:", e)
+            
+    @classmethod
+    def update_order_status(cls, id_order, update_data):
+        """
+        Recibe un `order_id` y un dict `update_data` con los campos a actualizar.
+        """
+        try:
+            collection, conexion = BDConnection.conexion_order_mongo()
+
+            # 🔹 Actualizamos la orden por su id
+            result = collection.update_one(
+                {"id": str(id_order)},      # filtro por id
+                {"$set": update_data}       # campos a actualizar
+            )
+
+            if result.matched_count:
+                print(f"✅ Orden {id_order} actualizada correctamente")
+            else:
+                print(f"⚠️ No se encontró la orden {id_order} para actualizar")
+
+            conexion.close()
+
+            # Opcional: eliminar la orden de algún lugar temporal si aplica
+            # cls.remove_order(order_id=order_id)
+
+        except Exception as e:
+            print("🔥 Error en  paymentStatus oder:", e)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @classmethod
     def upload_orders(cls):
         try:    
             print("ejecutando_order_db")
             list_orders = cls.get_list_orders_date()
             
             collection, conexion = BDConnection.conexion_order_mongo()
-
-            collection.insert_many(list_orders)
+            if list_orders:
+                collection.insert_many(list_orders)
+            else:
+                print("⚠️ No hay órdenes para subir a Mongo")
+            # collection.insert_many(list_orders)
             conexion.close()
             
             cls.remove_orders_date()
@@ -49,7 +145,7 @@ class OrdersManager:
 
 
     @classmethod
-    def add_order(cls, id_business,id_client, carts, total_amount, status="pending"):
+    def add_order(cls, id_business,id_client, carts, total_amount,data,status="pending",):
         """Crea una nueva orden en DB y la guarda en memoria"""
         with cls.lock:
             
@@ -60,16 +156,17 @@ class OrdersManager:
             order = Order.objects.create(
                 id_business= uuid.UUID(id_business) if id_business else uuid.uuid4(),
                 id_client= uuid.UUID(id_client) if id_client else uuid.uuid4(),
+                data = data,
                 carts=carts,
                 total_amount=total_amount,
                 status=status,
-                date=timezone.now() - timedelta(days=2)
+                date=timezone.now()
             )
                 
                 
             adminUserSerializer = OrderSerializer(order)
             json_order = adminUserSerializer.data  
-           
+            
             print(json_order)
             cls.orders[str(order.id)] = {
                 "obj": order,  # instancia real del modelo
@@ -136,15 +233,84 @@ class OrdersManager:
     
     @classmethod
     def get_list_orders_id(cls, idBusiness: str):
+        collection, conexion = BDConnection.conexion_order_mongo()
+        today = timezone.now()
+                # Rango: desde el inicio de hoy hasta el inicio de mañana
+        start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = start + timedelta(days=1)
+        
+        list_order_completed = list(collection.find({
+            # "status": "completed",
+            "date": {"$gte": start.isoformat(), "$lt": end.isoformat()}
+        }, {"_id": 0}))
+
         list_orders = Order.objects.filter(id_business=idBusiness)
         orderSerializer = OrderSerializer(list_orders, many=True)
-        return orderSerializer.data
+
+        # Unir ambas listas
+        combined = list_order_completed + orderSerializer.data
+
+        conexion.close()
+        return combined
+    
+    
+    
+    
+    #metodo para obtener la lista de ordenes que estan guardadas en la basede datos
+    @classmethod
+
+    def get_list_orders_from_database(cls, idBusiness: str, status: str = None):
+        #llamao conexion bdOrder
+        collection= ConexionOrderCache.get_collection()
+        
+        if status:
+            list_orders = list(
+                collection.find(
+                    {"id_business": str(idBusiness), "status": status},
+                    {"_id": 0}
+                )
+            )
+        else:
+            list_orders = list(
+                collection.find(
+                    {"id_business": str(idBusiness)},
+                    {"_id": 0}
+                    
+                )
+            )
+        
+        
+        print("ordenManager,bd")
+        print(list_orders)
+        
+        #cierro conexion
+        # conexion.close()
+        return list_orders
     
     @classmethod
-    def get_list_orders_date():
-        hoy = datetime.now()
-        list_orders = Order.objects.filter(date__lt=hoy)
+    def get_list_orders_pending_from_database(cls,idBusiness:str):
+        return cls.get_list_orders_from_database(idBusiness=idBusiness, status="pending")
+    
+    @classmethod
+    def get_list_orders_completed_from_database(cls,idBusiness:str):
+        return cls.get_list_orders_from_database(idBusiness=idBusiness, status="completed")
+    
+    @classmethod
+    def get_list_orders_cancelled_from_database(cls,idBusiness:str):
+        return cls.get_list_orders_from_database(idBusiness=idBusiness, status="cancelled")
+    
+    @classmethod
+    def get_list_orders_total_from_database(cls,idBusiness:str):
+        return cls.get_list_orders_from_database(idBusiness=idBusiness)
         
+    
+    
+    @classmethod
+    def get_list_orders_date(cls,idBusiness:str):
+        hoy = timezone.now()  # ✅ aware datetime
+        list_orders = Order.objects.filter(id_business=idBusiness,date__lt=hoy)
+        print("lista de ordenes")
+        print()
         orderSerializer= OrderSerializer(list_orders,many=True)
         json_data = orderSerializer.data
         
@@ -152,9 +318,9 @@ class OrdersManager:
 
 
     @classmethod
-    def get_list_orders(self):
+    def get_list_orders(self,idBusiness):
 
-        list_orders = Order.objects.all()
+        list_orders = Order.objects.filter(id_business=idBusiness)
         
         orderSerializer= OrderSerializer(list_orders,many=True)
         json_data = orderSerializer.data
@@ -234,56 +400,52 @@ class OrdersManager:
 
 
 class AnalyticsOrders:
-    def __init__(self, orders_queryset):
-        """
-        Recibe un QuerySet o lista de órdenes (instancias del modelo Order)
-        y filtra solo las órdenes del negocio indicado.
-        """
-        print("analitic orders")
-        # print(id_business)
-        print(orders_queryset)
-        # Convertimos a UUID si llega como string
-        # if isinstance(id_business, str):
-        #     id_business = uuid.UUID(id_business)
-        # self = Order.objects.filter(id_business= id_business)
+    def __init__(self,idbusiness):
         
-        for order in orders_queryset:
-            print(order)
-            response = ClientManager(id_client=str(order["id_client"])).get_client_id()  
-            order["client"] = response
+        try:
+            self.lasted_orders = OrdersManager.get_list_orders_total_from_database(idBusiness=idbusiness)
+            self.today_orders = OrdersManager.get_list_orders_date(idBusiness=idbusiness)
+            print("ejecutando analitic orders")
+        except Exception as e:
+            print(f"🔥 Error en AnalyticsOrders.__init__: {e}")
+            # opcional: puedes asignar listas vacías para que el objeto siga existiendo
+            self.lasted_orders = []
+            self.today_orders = []
 
-        self.orders = orders_queryset 
-        
-        # [o for o in orders_queryset if o.id_business == id_business]
-        print("ejecuctando sel.orders")
-        
-        print(self.orders)
-        
     # Conteo de órdenes por estados
     @property
     def quantity_pending(self):
-        return sum(1 for o in self.orders if o["status"] == "pending")
+        return sum(1 for o in self.lasted_orders if o["status"] == "pending")
 
     @property
     def quantity_completed(self):
-        return sum(1 for o in self.orders if o["status"] == "completed")
+        return sum(1 for o in self.lasted_orders if o["status"] == "completed")
     
     @property
     def quantity_cancelled(self):
-        return sum(1 for o in self.orders if o["status"] == "cancelled")
+        return sum(1 for o in self.lasted_orders if o["status"] == "cancelled")
 
     # Listas de órdenes por estado
     @property
     def pending_orders(self):
-        return [o for o in self.orders if o["status"] == "pending"]
+        return [o for o in self.lasted_orders if o["status"] == "pending"]
+
+
+    @property
+    def pending_lasted(self):
+        pass
+
+    @property
+    def pending_orders(self):
+        return [o for o in self.lasted_orders if o["status"] == "pending"]
 
     @property
     def completed_orders(self):
-        return [o for o in self.orders if o["status"] == "completed"]
+        return [o for o in self.lasted_orders if o["status"] == "completed"]
 
     @property
     def cancelled_orders(self):
-        return [o for o in self.orders if o["status"] == "cancelled"]
+        return [o for o in self.lasted_orders if o["status"] == "cancelled"]
 
     # Ganancia de órdenes completadas
     @property
@@ -301,15 +463,41 @@ class AnalyticsOrders:
         ]
         return mean(tiempos) if tiempos else 0
 
+    
+
     # Reporte para admin
     def report_by_admin(self):
-        return {    
-            "total": self.orders,
+        #         # --- set de IDs de órdenes pendientes en el histórico ---
+        # pending_ids = {o["id"] for o in self.lasted_orders if o["status"] == "pending"}
+
+        # # --- cuáles de esos pasaron a completed hoy ---
+        # completed_today_from_pending = [
+        #     o for o in self.today_orders
+        #     if o["status"] == "completed" and o["id"] in pending_ids
+        # ]
+
+        
+        
+        return {
+            "total_orders": len(self.lasted_orders),
+            "today_orders": self.today_orders,
             "pending": self.pending_orders,
-            "completed": self.completed_orders,
             "cancelled": self.cancelled_orders,
+            "completed": self.completed_orders,
+            # "last_orders"
+            "orders": {
+                "all": self.lasted_orders,
+                "today": self.today_orders
+            },
+            "status_summary": {
+                "total": len(self.lasted_orders) + len(self.today_orders),
+                "today": len(self.today_orders),
+                "pending": len([o for o in self.lasted_orders if o["status"] == "pending"]),
+                "completed": len([o for o in self.lasted_orders if o["status"] == "completed"]),
+                "cancelled": len([o for o in self.lasted_orders if o["status"] == "cancelled"]),
+            },
             "earn_today": str(self.earn_today),
-            # "tiempo_promedio_procesado_seg": self.tiempo_promedio_procesado
+            # "completed_today_from_pending": completed_today_from_pending
         }
 
     # Reporte para cliente

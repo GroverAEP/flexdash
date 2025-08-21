@@ -12,6 +12,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'id',
             'id_business',
             'id_client',
+            'data',
             'carts',
             'status',
             'total_amount',

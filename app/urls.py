@@ -3,12 +3,12 @@ from django.urls import path
 from app.views import views
 from app.views.order import OrderCreateAPIView,OrderCanceledView,OrderDashBoardView,OrderGetList
 from app.views.dashboard import DashboardInfoTimeRealDay
-from app.views.payment import PaymentProcess
+from app.views.payment import PaymentProcess , PaymentCancelled
 
 from app.content.orders import OrdersManager
 
 #separo la vista en 2 
-from app.views.stream import orders_stream_view
+from app.views.stream import OrdersStreamView, OrdersStreamSafeView,OrdersStreamTodayView
 
 #Admin
 #client
@@ -45,16 +45,16 @@ urlpatterns = [
     # path('generar_imagen/', views.generate_image, name="generate_image")   
     
     
-    #PAGO VALIDADO
+    #PROCESO PAGO VALIDADO
     
     path('validated/', PaymentProcess.as_view(),name="validated-payment"),
     
+    path('cancelled/', PaymentCancelled.as_view(), name="cancelled-payment"),
     
     
 
     
     #Test
-    
     path('get_error/', views.get_error, name="get_error"),
     path('post_json_test', views.obtener_post_pagina, name="postTest"),
     path('get_json_test', views.get_json_test, name="get_json_test" ),
@@ -96,7 +96,11 @@ urlpatterns = [
 
     path("analytics/orders",DashboardInfoTimeRealDay.as_view(), name="orders_analytics" ),
 
-    path("orders/stream/<uuid:business_id>/", orders_stream_view, name="orders_stream"),
-
-]
+    path("orders/stream/<uuid:business_id>/", OrdersStreamView.as_view(), name="orders_stream"),
+    path("orders/stream_pending_safe/<uuid:business_id>/", OrdersStreamSafeView.as_view(), name="orders-pending-safe"),
+    path("orders/stream_pending_today/<uuid:business_id>/", OrdersStreamTodayView.as_view(), name="orders-pending-today"),
+    
+    
+    path("upload_orders/", views.upload_orders_view, name="upload_orders"),
+    ]
 

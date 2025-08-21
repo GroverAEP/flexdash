@@ -260,6 +260,7 @@ class Order(models.Model):
     )
     id_business = models.UUIDField(default=uuid.uuid4,null=False, blank=False,editable=True	)
     id_client = models.UUIDField(default=uuid.uuid4,null=False, blank=False,editable=True	)  
+    data=  models.JSONField(default=dict, blank=True)
     carts = models.JSONField(default=dict, blank=True)  # Datos adicionales de la orden
     status = models.CharField(
         max_length=20,

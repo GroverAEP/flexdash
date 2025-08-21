@@ -11,15 +11,22 @@ from django.http import JsonResponse
 class OrderCreateAPIView(APIView):
     def post(self, request):
         try:
-            data = json.loads(request.body)
+            info = json.loads(request.body)
             # uuid.UUID(data.get("idBusiness")) if data.get("idBusiness") else uuid.uuid4()
             # uuid.UUID(data.get("idClient")) if data.get("idClient") else uuid.uuid4()
-            id_business = data.get("idBusiness") if data.get("idBusiness") else uuid.uuid4()
-            id_client = data.get("idClient") if data.get("idClient") else uuid.uuid4()
-            carts=data.get("carts", {})
-            total_amount=data.get("total_amount")
+            id_business = info.get("idBusiness") if info.get("idBusiness") else uuid.uuid4()
+            id_client = info.get("idClient") if info.get("idClient") else uuid.uuid4()
+            total_amount=info.get("total_amount")
+            carts= info.get("carts", {})
+            data_cl = info.get("data",{})
             
-            response = OrdersManager.add_order(id_business=id_business,id_client=id_client,carts= carts,total_amount=total_amount)
+            print(data_cl)
+            response = OrdersManager.add_order(
+                    id_business=id_business,
+                    id_client=id_client,
+                    carts=carts,
+                    total_amount=total_amount
+                    ,data=data_cl)
 
             # print(response.get("id","no hay id"))
             
