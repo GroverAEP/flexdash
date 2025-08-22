@@ -21,6 +21,39 @@ class OrdersManager:
         self.orders = {}  # key = order_id, value = dict con datos de la orden
         self.lock = Lock()
 
+
+    @classmethod
+    def cancelled_order_process(cls,id_order:str,data:dict,reason:str):
+        try:   
+            #primero identificamos si la orden es pasada o de hoy
+            update_data = {
+                    "status":"cancelled",
+                    "carts.reason": reason,
+                    "update_data": timezone.now().isoformat()
+            }
+            
+            print("COMPROVANDO VALIDATEORDER")
+            print(Order.objects.filter(id=UUID(id_order)).exists())
+            print(Order.objects.filter(id=id_order).exists())
+            
+            if Order.objects.filter(id=UUID(id_order)).exists():
+                data["status"] = "cancelled"
+                data["update_date"] = timezone.now().isoformat()
+                data["carts"]["reason"]  =reason
+                
+                cls.upload_order_completed(id_order=id_order,upload_data=data)
+                
+                Order.objects.filter(id=id_order).delete()
+            else:
+                cls.update_order_status(id_order=id_order,update_data=update_data)
+                
+        
+        except Exception as e:
+            print("🔥 Error en PaymentProcess:", e) 
+        
+
+
+
     @classmethod
     def validated_order_process(cls,id_order:str,data:dict):
         try:
@@ -287,6 +320,15 @@ class OrdersManager:
         # conexion.close()
         return list_orders
     
+    
+    # @classmethod
+    # # def get_earn_month():
+    # #         cl
+    # #     return
+    
+    
+    
+    
     @classmethod
     def get_list_orders_pending_from_database(cls,idBusiness:str):
         return cls.get_list_orders_from_database(idBusiness=idBusiness, status="pending")
@@ -465,6 +507,39 @@ class AnalyticsOrders:
 
     
 
+    def report_earn_month(self):
+        try:
+            list_month=[f"{i:02}" for i in range(1,13)]
+            
+            # print(list_month)
+            # list_earn_month = [
+            #     {"id": "1AKOSOk2oad", "total_amount": 32, "update_date": "2025-08-20T00:51:01.659105+00:00"},
+            #     {"id": "2AKOSOk2oad", "total_amount": 20, "update_date": "2025-08-19T05:06:09.364504+00:00"},
+            #     {"id": "3AKOSOk2oad", "total_amount": 20, "update_date": "2025-07-20T02:52:28.650380+00:00"},
+            #     {"id": "5AKOSOk2oad", "total_amount": 32, "update_date": "2025-06-20T04:16:05.647452+00:00"},
+            # ]
+            # 🔹 1. Convertimos fechas y las agrupamos por mes
+                # 🔹 1. Inicializamos con 0 en todos los meses
+            suma_por_mes = {m: 0 for m in list_month}
+            
+            
+            
+            # 🔹 2. Recorremos las órdenes y sumamos por mes
+            for o in self.completed_orders:
+                dt = datetime.fromisoformat(o["update_date"].replace("Z", "+00:00"))
+                mes = f"{dt.month:02}"  # "06", "07", "08"
+                suma_por_mes[mes] += Decimal( o["total_amount"])
+            # 🔹 Convertir Decimals a float para JSON
+                resultado = [float(suma_por_mes[f"{m:02}"]) for m in range(1,13)]
+
+            # 🔹 3. Resultado
+            print("suma")
+            print(resultado)
+            return resultado
+        except Exception as e:
+            "error"
+            print(e)
+        
     # Reporte para admin
     def report_by_admin(self):
         #         # --- set de IDs de órdenes pendientes en el histórico ---

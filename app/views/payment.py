@@ -54,18 +54,13 @@ class PaymentCancelled(APIView):
             
             order_data = json.loads(order_json)      # lo conviertes a dict 
             
-            # aseguramos que carts existe y es dict
-            carts = order_data.get("carts", {})
-
-            order_data["status"] = "cancelled"
-            # agregamos el campo reason
-            carts["reason"] = str(reason)
 
             # actualizamos la orden
-            order = Order.objects.get(id=order_data["id"])
-            order.status = order_data["status"]
-            order.carts = carts
-            order.save()
+            # order = Order.objects.get(id=order_data["id"])
+            # order.status = order_data["status"]
+            # order.carts = carts
+            # order.save()
+            OrdersManager.cancelled_order_process(id_order=order_data["id"] , data=order_data,reason=reason)
 
                         
             

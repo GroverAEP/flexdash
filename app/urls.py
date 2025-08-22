@@ -8,7 +8,7 @@ from app.views.payment import PaymentProcess , PaymentCancelled
 from app.content.orders import OrdersManager
 
 #separo la vista en 2 
-from app.views.stream import OrdersStreamView, OrdersStreamSafeView,OrdersStreamTodayView
+from app.views.stream import OrdersStreamView, OrdersStreamSafeView,OrdersStreamTodayView,OrdersEarnMounthStreamView
 
 #Admin
 #client
@@ -51,6 +51,9 @@ urlpatterns = [
     
     path('cancelled/', PaymentCancelled.as_view(), name="cancelled-payment"),
     
+    #Grafica dashboard metodos():
+    
+    # path('metrics/earnMonth/', Metrics.as_view(), name= "event-earn-month")
     
 
     
@@ -96,11 +99,17 @@ urlpatterns = [
 
     path("analytics/orders",DashboardInfoTimeRealDay.as_view(), name="orders_analytics" ),
 
+
+
+     #stream metrics:
+
     path("orders/stream/<uuid:business_id>/", OrdersStreamView.as_view(), name="orders_stream"),
     path("orders/stream_pending_safe/<uuid:business_id>/", OrdersStreamSafeView.as_view(), name="orders-pending-safe"),
     path("orders/stream_pending_today/<uuid:business_id>/", OrdersStreamTodayView.as_view(), name="orders-pending-today"),
-    
-    
+    path("orders/metrics/stream_earn_month/<uuid:business_id>/", OrdersEarnMounthStreamView.as_view(), name="event-month-earn"),
+    path("orders/metrics/stream_orders_month/<uuid:business_id>/", OrdersStreamTodayView.as_view(), name="orders-month"),
+    path("orders/metrics/stream_customers_month/<uuid:business_id>/", OrdersStreamTodayView.as_view(), name= "order-customers-month")    ,
+
     path("upload_orders/", views.upload_orders_view, name="upload_orders"),
     ]
 

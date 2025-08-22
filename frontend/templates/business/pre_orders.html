@@ -364,6 +364,8 @@ ScriptCards Peding Hoy
     
     // SSE
     eventSafePedingSource = new EventSource("{% url 'orders-pending-safe' request.session.unique_business.id %}");
+ 
+ 
     eventSafePedingSource.onopen = function () {
       console.log("Conexión establecida con : order-pending-safe");
     };
@@ -372,7 +374,7 @@ ScriptCards Peding Hoy
     // Siempre insertamos el título + la UL vacía de inicio
     ContainerBodyListPedingSafe.innerHTML = `
       <h1 class="text-3xl font-bold relative inline-block mb-4">
-        Esta semana
+        Pendientes
       </h1>
       <ul id="safe-pending-orders-list" class="space-y-4"></ul>
     `;
@@ -422,37 +424,20 @@ ScriptCards Peding Hoy
     
     
                   <div class="mt-4 flex gap-2">
-                   <button id="validatedBtn" 
-                    class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg" 
-                    data-order='${JSON.stringify(order)}'> Orden pagada </button>
-    
-                  <form action="{% url 'cancelled-payment' %}" method="post" class="flex-1 cancel-form">
-                      <input type="hidden" name="next" value="${nextUrl}">
-                      <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
-                    <input type="hidden" name="order" value='${JSON.stringify(order)}'>
-                      <input type="hidden" name="reason" class="reason-field">
-      
-                      <!-- Input oculto que se muestra solo cuando el usuario hace clic -->
-                      <input 
-                        type="text" 
-                        name="reason" 
-                        class="reason-field hidden w-full border px-2 py-1 rounded-lg mt-2"
-                        placeholder="Escribe la razón de cancelación..."
-                      >
-    
-                      <button 
-                        type="button" 
-                        class="cancel-btn w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg">
-                        Orden cancelada
-                      </button>
-    
-                      <!-- Botón de enviar oculto hasta que se ingrese la razón -->
-                      <button 
-                      type="submit" 
-                        class="submit-btn hidden w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg mt-2">
-                        Confirmar cancelación
+                      <button id="validatedBtn" 
+                        class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg" 
+                        data-order='${JSON.stringify(order)}'> Validar Orden </button>
+        
+                        <button id="cancelledBtn"
+                          type="button" 
+                          id="cancelledBtn"
+                          data-order='${JSON.stringify(order)}'> Orden pagada </button>
+
+                          class="cancel-btn w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg">
+                          Cancelar Orden
                         </button>
-                        </form>
+    
+                   
                         </div>
                         </div>
                         `;
@@ -464,6 +449,7 @@ ScriptCards Peding Hoy
 
 
 
+    // const ContainerListPendingSafe = document.getElementById("safe-pending-orders-list");
 
 
 
@@ -545,36 +531,35 @@ Script 3 - today_peding
               <p>- ${order.data.email}</p>
               <p>- ${order.data.phone}</p>
               </div>
-              </p>
+          </p>
           <p><span class="font-semibold">Carrito:</span>
             <div class="ml-4 mt-1">
               ${order.carts.items.map(item => `
               <p>- ${item.name} (x${item.quantity}) -  S/.${item.price}</p>
               `).join("")}
-              </div>
-              </p>
-              <p><span class="font-semibold">Estado:</span> ${order.status}</p>
-              <p><span class="font-semibold">Total:</span> S/.${order.total_amount}</p>
-              <p><span class="font-semibold">Creado:</span> ${new Date(order.date).toLocaleString()}</p>
-              </div>
-              <div class="mt-4 flex gap-2">
-                <button id="validatedBtn" 
-                class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg" 
-                data-order='${JSON.stringify(order)}'> Orden pagada </button>
-                <form action="{% url 'cancelled-payment' %}" method="post" class="flex-1 cancel-form">
-                  <input type="hidden" name="next" value="${nextUrl}">
-                  <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
-                  <input type="hidden" name="order" value='${JSON.stringify(order)}'>
-                  <input type="hidden" name="reason" class="reason-field">
-                  <input type="text" name="reason" class="reason-field hidden w-full border px-2 py-1 rounded-lg mt-2" placeholder="Escribe la razón de cancelación...">
-                  <button type="button" class="cancel-btn w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg">
-                    Orden cancelada
-                    </button>
-                    <button type="submit" class="submit-btn hidden w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg mt-2">
-                      Confirmar cancelación
-                      </button>
-                      </form>  
-                      </div>  
+            </div>
+            
+            <div>
+            <p><span class="font-semibold">Estado:</span> ${order.status}</p>
+            <p><span class="font-semibold">Total:</span> S/.${order.total_amount}</p>
+            <p><span class="font-semibold">Creado:</span> ${new Date(order.date).toLocaleString()}</p>
+            
+            </div>
+            <div class="mt-4 flex gap-2">
+              <button id="validatedBtn" 
+              class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg" 
+              data-order='${JSON.stringify(order)}'> Validar Orden </button>
+          
+              <button id="cancelledBtn" 
+              class = "cancel-btn w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg"
+              data-order='${JSON.stringify(order)}'> Cancelar Orden
+              </button>
+              
+              
+
+            </div>  
+
+            </div>  
                       `;  
                     }  
                     
@@ -705,8 +690,12 @@ Script 4 - validated_peding
 
 <script>
   function sendValidatedOrder(order, nextUrl) {
+    // const ContainerTodayOrder = document.getElementById("today-pending-orders-list");
+
+    // const ContainerListPendingSafe = document.getElementById("safe-pending-orders-list");
     
-      // delegación de eventos
+    
+    // delegación de eventos
     const validatedPaymentURL = "{% url 'validated-payment' %}";
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
   
@@ -736,7 +725,7 @@ Script 4 - validated_peding
         });
   }
   // función reutilizable
-  ContainerListPendingSafe.addEventListener("click", function (event) {
+  document.addEventListener("click", function (event) {
     if (event.target && event.target.id === "validatedBtn"){
 
       const order = JSON.parse(event.target.dataset.order);
@@ -746,14 +735,69 @@ Script 4 - validated_peding
     }
   })
 
-  ContainerTodayOrder.addEventListener("click", function (event) {
-      if (event.target && event.target.id === "validatedBtn") {
-        // Recuperar la orden del atributo data-order
-        const order = JSON.parse(event.target.dataset.order);
-        console.log(event.target.dataset)  
-        // Llamar a la función con la orden específica
-        sendValidatedOrder(order, nextUrl);
-      }
+  // document.addEventListener("click", function (event) {
+  //     if (event.target && event.target.id === "validatedBtn") {
+  //       // Recuperar la orden del atributo data-order
+  //       const order = JSON.parse(event.target.dataset.order);
+  //       console.log(event.target.dataset)  
+  //       // Llamar a la función con la orden específica
+  //       sendValidatedOrder(order, nextUrl);
+  //     }
 
-    });
+  //   });
+</script>
+
+<!--
+Script 5 - cancelled
+-->
+
+
+<script>
+  function sendCancelledOrder(order, nextUrl, reason) {
+    
+
+    const validatedPaymentURL = "{% url 'cancelled-payment' %}";
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    const formData = new FormData();
+    formData.append("order", JSON.stringify(order));
+    formData.append("reason", reason);
+    formData.append("next", nextUrl);
+
+    fetch(validatedPaymentURL, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken
+      },
+      body: formData
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log("✅ Respuesta del servidor:", data);
+      })
+      .catch(error => {
+        console.error("❌ Error en fetch:", error);
+      });
+  }
+
+  // función reutilizable
+  function handleCancelClick(event) {
+    if (event.target && event.target.id === "cancelledBtn") {
+      const order = JSON.parse(event.target.dataset.order);
+
+      // Mostrar prompt para ingresar razón
+      const reason = prompt("Ingrese la razón de cancelación:");
+
+      console.log(reason)
+
+      if (reason && reason.trim() !== "") {
+        sendCancelledOrder(order, nextUrl, reason.trim());
+      } else {
+        alert("Debe ingresar una razón para cancelar la orden.");
+      }
+    }
+  }
+
+  document.addEventListener("click", handleCancelClick);
+  // document.addEventListener("click", handleCancelClick);
 </script>

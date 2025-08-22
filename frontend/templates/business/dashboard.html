@@ -81,28 +81,49 @@
         
         <!-- 📊 Gráfico -->
         <div class="chart-container w-full h-96 mb-6">
-        <canvas id="gananciaChart"></canvas>
-        </div>
+            <!-- <div class="" > -->
+                <canvas id="earnChartTable"></canvas>
 
+            <!-- </div> -->
+            <!-- <div>
 
-        <!-- FeedBack -->
-        <!-- Grid Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <div class="bg-white shadow rounded p-4">
-                <h3 class="text-sm text-gray-500">Órdenes hoy</h3>
-                <!-- <p class="text-2xl font-bold">{{ request.session.unique_business.orders | length }}</p> -->
-                <p class="text-2xl font-bold"><span id="orders-count">0</span></p>
+                <canvas id="orderVisual"></canvas>
+
             </div>
-            <div class="bg-white shadow rounded p-4">
-                <h3 class="text-sm text-gray-500">Ganancias hoy</h3>
-                <p class="text-2xl font-bold">S/ <span id= "earn-today">0</span> </p>
-            </div>
-            <div class="bg-white shadow rounded p-4">
-                <h3 class="text-sm text-gray-500">Clientes nuevos</h3>
-                <p class="text-2xl font-bold">3</p>
-            </div>
+            <canvas id="customersEntrance"></canvas> -->
         </div>
         
+
+
+
+
+
+
+
+
+
+
+
+
+
+            <!-- FeedBack -->
+            <!-- Grid Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="bg-white shadow rounded p-4">
+                    <h3 class="text-sm text-gray-500">Órdenes hoy</h3>
+                    <!-- <p class="text-2xl font-bold">{{ request.session.unique_business.orders | length }}</p> -->
+                    <p class="text-2xl font-bold"><span id="orders-count">0</span></p>
+                </div>
+                <div class="bg-white shadow rounded p-4">
+                    <h3 class="text-sm text-gray-500">Ganancias hoy</h3>
+                    <p class="text-2xl font-bold">S/ <span id= "earn-today">0</span> </p>
+                </div>
+                <div class="bg-white shadow rounded p-4">
+                    <h3 class="text-sm text-gray-500">Clientes nuevos</h3>
+                    <p class="text-2xl font-bold">3</p>
+                </div>
+            </div>
+            
         <div>
             
         </div>
@@ -111,13 +132,14 @@
         
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
            
-                <h3 class="text-sm text-gray-500">comentarios</h3>
-                <p class="text-2xl font-bold">usuario 1</p>
+
            
         </div>
 
 
     <!-- 📌 Código para el gráfico -->
+
+    <!--     gRAFICA DE GANANCIAS POR MES     -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
@@ -128,31 +150,79 @@
 
 
 <script>
-  const ctAx = document.getElementById('gananciaChart').getContext('2d');
 
-  new Chart(ctAx, {
-    type: 'bar', // Puedes cambiar a 'line' si quieres gráfico lineal
-    data: {
-      labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio','Julio','Agosto'], // Meses
-      datasets: [{
-        label: 'Ganancia (USD)',
-        data: [8500, 9200, 7800, 10000, 9500, 11000], // Ganancia por mes
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
+// Script para obtener las ganancias generadas en el mes
+const earn_chart_month = document.getElementById('earnChartTable');
+const ctAx = earn_chart_month.getContext('2d');
+
+let eventEarnMonth = null;
+
+const list_week = [
+    "Enero", "Febrero", "Marzo", "Abril",
+    "Mayo", "Junio", "Julio", "Agosto",
+    "Septiembre", "Octubre", "Noviembre", "Diciembre"
+];
+
+function initialEventEarnMonth() {
+        eventEarnMonth = new  EventSource("{% url 'event-month-earn' request.session.unique_business.id %}")
+
+    eventEarnMonth.onmessage = function(event) {
+        const data = JSON.parse(event.data); // { "01": 0, "02": 0, ..., "08": 52, ... }
+        const earn_month = Object.values(data); // [0,0,0,0,0,32,20,52,0,0,0,0]
+
+        console.log("📊 Datos recibidos:", data);
+        console.log(earn_month)
+        new Chart(ctAx, {
+            type: 'bar',
+            data: {
+                labels: list_week,
+                datasets: [{
+                    label: 'Ganancia (USD)',
+                    data: earn_month,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    };
+}
+
+initialEventEarnMonth();
+
+// ✅ Cuando cambias de página o cierras la pestaña
+window.addEventListener("beforeunload", function() {
+    if (eventEarnMonth) {
+        eventEarnMonth.close();
+        console.log("🔌 Stream cerrado");
     }
-  });
+});
+
+
+
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

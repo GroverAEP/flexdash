@@ -166,50 +166,49 @@ class StreamOrder:
             conexion.close()
 
     
-    # @staticmethod
-    # def stream_safe_completed_orders(business_id):
-    #     pipeline = [
-    #         {
-    #             "$match": {
-    #                 "fullDocument.id_business": business_id,
-    #                 "fullDocument.status": "completed"
-    #             }
-    #         }
-    #     ]
-
-    #     try:
-    #         collection, conexion = BDConnection.conexion_order_mongo()
-
-    #         # 1️⃣ Emitir snapshot inicial (todas las órdenes pendientes actuales)
-    #         try:
-    #             initial_orders = list(OrdersManager.get_list_orders_pending_from_database(business_id))
-    #             if initial_orders:
-    #                 yield f"data: {json.dumps(initial_orders)}\n\n"
-    #         except Exception as e:
-    #             yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
-
-    #         # 2️⃣ Escuchar cambios en tiempo real
-    #         with collection.watch(pipeline, full_document="updateLookup") as stream:
-    #             for change in stream:
-    #                 print("Modificación detectada en la colección:", change)
-
-    #                 try:
-    #                     # Vuelves a traer todas las órdenes pendientes
-    #                     list_pending_orders = list(
-    #                         OrdersManager.get_list_orders_pending_from_database(business_id)
-    #                     )
-
-    #                     yield f"data: {json.dumps(list_pending_orders)}\n\n"
-
-    #                 except Exception as e:
-    #                     yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
-
-    #     except Exception as e:
-    #         yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
-    #     finally:
-    #         conexion.close()
-
     
+    def stream_earn_month_orders(business_id):
+        pipeline= [
+            {
+                "$match": {
+                    "fullDocument.id_business": business_id,
+                    "fullDocument.status": "completed",
+                    
+                }   
+            }
+        ]
+        
+        try:
+            collection, conexion = BDConnection.conexion_order_mongo()
+
+            # 1️⃣ Emitir snapshot inicial (todas las órdenes pendientes actuales)
+            analyticsOrders = AnalyticsOrders(idbusiness= business_id)
+            try:
+                print("ejecutando el anlaisist")
+                earn_month = analyticsOrders.report_earn_month()
+                yield f"data: {json.dumps(earn_month)}\n\n"
+                yield ": ping\n\n"   # 🔹 Fuerza que el cliente lo reciba ya
+            except Exception as e:
+                yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+            # 2️⃣ Escuchar cambios en tiempo real
+            with collection.watch(pipeline, full_document="updateLookup") as stream:
+                for change in stream:
+                    print("Modificación detectada en la colección:", change)
+
+                    try:
+                        
+                        earn_month = analyticsOrders.report_earn_month()
+
+                        yield f"data: {json.dumps(earn_month)}\n\n"
+
+                    except Exception as e:
+                        yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+        except Exception as e:
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+        finally:
+            conexion.close()
 
 
 class OrdersStreamTodayView(View):
@@ -257,3 +256,15 @@ class OrdersStreamSafeView(View):
             # ⚠️ Si algo falla antes de empezar el stream, devolvemos un error normal
             print(f"Error en OrdersStreamSafeView: {e}")
             return HttpResponseServerError("Error iniciando el stream")
+
+
+class OrdersEarnMounthStreamView(View):
+    def get(self, request, business_id):
+        response = StreamingHttpResponse(
+            StreamOrder.stream_earn_month_orders(business_id=business_id),
+            content_type = 'text/event-stream'
+            
+        )
+        response['Cache-Control'] = 'no-cache'
+        response['X-Accel-Buffering'] = 'no'
+        return response
