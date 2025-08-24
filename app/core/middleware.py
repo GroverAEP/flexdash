@@ -28,7 +28,7 @@ class LoginRequiredMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        path = request.paths
+        path = request.path
         auth_header = request.headers.get("Authorization", "")
       
         # Ignorar todas las rutas que empiecen con /api/
