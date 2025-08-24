@@ -308,7 +308,7 @@ def obtener_pots(request):
         return JsonResponse({'error': 'Nose pudo obtener los datos'}, status=500)
 
 @csrf_exempt
-def cal_price_total (request):
+def resave_item_order (request):
     if request.method == 'POST':
         try:
 

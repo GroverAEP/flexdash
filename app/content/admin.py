@@ -192,7 +192,7 @@ class AdminContent():
         try:
             # Buscar documento con ese ID
             doc = collection.find_one({"id": id})
-
+            print(doc)
             if not doc:
                 return JsonResponse({
                     "status": 404,
@@ -200,13 +200,13 @@ class AdminContent():
                 })
 
             # Asegurar que 'catalog' y 'catalog_items' existan
-            catalog = doc.get("business", [])[0].get("catalog") if doc.get("business") else None
-            catalog_items = catalog.get("catalog_items") if catalog else None
+            # catalog = doc.get("business", [])[0].get("catalog") if doc.get("business") else None
+            # catalog_items = catalog.get("catalog_items") if catalog else None
 
-            print("catalog - Business")
-            print(catalog_items)
+            # print("catalog - Business")
+            print(doc)
             
-            return catalog_items
+            return doc
             
 
             # return JsonResponse({

@@ -133,3 +133,42 @@ class BusinessManager():
             return {
                 "Error": str(e),
             }
+            
+
+    @classmethod
+    def search_id_catalog(cls, id):
+        collection, conexion = BDConnection.conexion_business_mongo()
+
+        try:
+            # Buscar documento con ese ID
+            doc = collection.find_one({"id": id},{"_id":0})
+            print(doc)
+            if not doc:
+                return JsonResponse({
+                    "status": 404,
+                    "message": "Documento no encontrado"
+                })
+
+            # Asegurar que 'catalog' y 'catalog_items' existan
+            # catalog = doc.get("business", [])[0].get("catalog") if doc.get("business") else None
+            catalog = doc.get('catalog')
+            catalog_items = catalog.get("catalog_items") if catalog else None
+
+            print("catalog - Business")
+            print(catalog_items)
+            
+            return catalog_items
+            
+
+            # return JsonResponse({
+            #     "status": 200,
+            #     "data": catalog_items or []
+            # })
+
+
+        except Exception as e:
+            conexion.close()
+            return JsonResponse({
+                "status": 500,
+                "error": str(e)
+            })

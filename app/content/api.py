@@ -31,6 +31,7 @@ import tempfile
 
 from weasyprint import HTML
 from django.template.loader import render_to_string
+from app.content.business import BusinessManager
 
 
 class ClientContent():
@@ -160,6 +161,8 @@ class ClientContent():
 class AiContent:
     @classmethod
     def validation_for_name(cls, user_name, catalog):
+        print(catalog)
+        
         texts = [user_name] + [item["name"] for item in catalog]
         vectorizer = TfidfVectorizer().fit(texts)
         vectors = vectorizer.transform(texts)
@@ -494,7 +497,11 @@ class CalContent():
             return JsonResponse({"status": 400, "error": "default_year inválido"}, status=400)
 
         price_total = Decimal("0.0")
-        jsonCatalog = AdminContent.search_id_catalog(id_business)
+        jsonCatalog = BusinessManager.search_id_catalog(id_business)
+        print(jsonCatalog)
+        # json_catalog = json.loads(jsonCatalog.content.decode("utf-8"))
+        # print
+        # print(json_catalog)
         if jsonCatalog is None:
             return JsonResponse({
                 "status": 404,
@@ -513,6 +520,9 @@ class CalContent():
                     "response": {"error": f"{expected_type} sin título proporcionado"}
                 }, status=404)
 
+            print("resave_total_price: ")
+            print(jsonCatalog)
+            
             obj = AiContent.validation_for_name(title, jsonCatalog)
             if not isinstance(obj, dict) or obj.get("type") != expected_type:
                 return JsonResponse({
