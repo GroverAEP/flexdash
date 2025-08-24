@@ -467,6 +467,33 @@ def validate_client(request):
       
     return JsonResponse({'error': f'Método no permitido: {request.method}'}, status=405)
 
+@csrf_exempt
+def get_id_client(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            
+            idClient = data.get("idClientChatBot") 
+            
+            response = ClientContent.search_id_client(idClient)
+            
+            if response is None:
+                    
+                return JsonResponse({
+                    "response": {"text": "cliente no encontrado"}
+                },status=200)
+            
+            return JsonResponse({
+                "response": response
+            },status=200)
+            
+            
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': f'Método no permitido: {request.method}'}, status=405)
+
+
 
 
 def encode_image(filename):

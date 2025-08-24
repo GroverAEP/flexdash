@@ -135,10 +135,10 @@ class ClientContent():
         return user
         
     @classmethod
-    def search_id_client(id_client):
+    def search_id_client(cls,id_client):
         collection, conexion    =BDConnection.conexion_client_mongo()
  
-        user = collection.find_one({"idClientChatBot": id_client})
+        user = collection.find_one({"idClientChatBot": id_client},{"_id":0})
         
         conexion.close()
         return user

@@ -35,11 +35,15 @@ urlpatterns = [
 
     
     
+    
+    
     #path unicacmenete para los clientes vista(Bot)
     path('add_client/', views.add_client, name= "add_user"),
     
     path('validation_user/', views.validate_client, name="validation_user"),
     #Administracion o paginas de pruebas
+    
+    path('get_id_client/',views.get_id_client, name="get-id-client"),
     
     path('index/', views.index, name='index'),
     # path('generar_imagen/', views.generate_image, name="generate_image")   
