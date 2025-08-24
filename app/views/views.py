@@ -415,6 +415,7 @@ def add_client(request):
 
             ClientContent.add_user(data)
             
+            # validar Email
             
             # nombre = data.get('name','')
             

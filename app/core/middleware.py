@@ -28,9 +28,12 @@ class LoginRequiredMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        path = request.path
+        path = request.paths
         auth_header = request.headers.get("Authorization", "")
-
+      
+        # Ignorar todas las rutas que empiecen con /api/
+        if path.startswith("/api/"):
+            return self.get_response(request)
         # Si el header empieza con "Bearer " y el token es correcto
         if auth_header.startswith("Bearer "):
             token = auth_header.split("Bearer ")[1]
