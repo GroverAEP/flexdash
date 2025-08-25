@@ -484,95 +484,99 @@ class CalContent():
     
     @classmethod    
     def resave_total_price(cls, payload):
-        if not isinstance(payload, dict):
-            return JsonResponse({"status": 400, "error": "payload debe ser un objeto JSON"}, status=400)
-
-        # validar campos esenciales
-        id_business = payload.get("idBusiness")
-        if not id_business:
-            return JsonResponse({"status": 400, "error": "idBusiness faltante"}, status=400)
         try:
-            default_year = int(payload.get("default_year", 0))
-        except Exception:
-            return JsonResponse({"status": 400, "error": "default_year inválido"}, status=400)
+            if not isinstance(payload, dict):
+                return JsonResponse({"status": 400, "error": "payload debe ser un objeto JSON"}, status=400)
 
-        price_total = Decimal("0.0")
-        jsonCatalog = BusinessManager.search_id_catalog(id_business)
-        print(jsonCatalog)
-        # json_catalog = json.loads(jsonCatalog.content.decode("utf-8"))
-        # print
-        # print(json_catalog)
-        if jsonCatalog is None:
-            return JsonResponse({
-                "status": 404,
-                "response": {"error": "catálogo del negocio no encontrado"}
-            }, status=404)
+            # validar campos esenciales
+            id_business = payload.get("idBusiness")
+            if not id_business:
+                return JsonResponse({"status": 400, "error": "idBusiness faltante"}, status=400)
+            try:
+                default_year = int(payload.get("default_year", 0))
+            except Exception:
+                return JsonResponse({"status": 400, "error": "default_year inválido"}, status=400)
 
-        def validate_and_accumulate(item, expected_type):
-            nonlocal price_total
-            if not isinstance(item, dict):
-                return JsonResponse({"status": 400, "response": {"error": f"item inválido en {expected_type}"}}, status=400)
-
-            title = item.get("title")
-            if not title:
-                return JsonResponse({
-                    "status": 404,
-                    "response": {"error": f"{expected_type} sin título proporcionado"}
-                }, status=404)
-
-            print("resave_total_price: ")
+            price_total = Decimal("0.0")
+            jsonCatalog = BusinessManager.search_id_catalog(id_business)
             print(jsonCatalog)
-            
-            obj = AiContent.validation_for_name(title, jsonCatalog)
-            if not isinstance(obj, dict) or obj.get("type") != expected_type:
+            # json_catalog = json.loads(jsonCatalog.content.decode("utf-8"))
+            # print
+            # print(json_catalog)
+            if jsonCatalog is None:
                 return JsonResponse({
                     "status": 404,
-                    "response": {"error": f"{expected_type} '{title}' no válido o no encontrado"}
+                    "response": {"error": "catálogo del negocio no encontrado"}
                 }, status=404)
 
-            # Normalizar campos
-            item["title"] = obj.get("name", title)
-            item["unit_price"] = obj.get("price", "0.0")
+            def validate_and_accumulate(item, expected_type):
+                nonlocal price_total
+                if not isinstance(item, dict):
+                    return JsonResponse({"status": 400, "response": {"error": f"item inválido en {expected_type}"}}, status=400)
 
-            if expected_type == "serv":
-                date_str = item.get("date", "")
-                time_str = item.get("time", "")
-                
-                #validar fechas
-                result = cls.verification_time_zone(date_str=date_str,default_year= default_year)
-                if result.get("success"):
-                    print(result)
-                    item["description"] = f"fecha registrada: {date_str} - Hora: {time_str}"
-                else:
+                title = item.get("title")
+                if not title:
                     return JsonResponse({
                         "status": 404,
-                        "response": {"error": f"Fecha pasada es invalida"}
+                        "response": {"error": f"{expected_type} sin título proporcionado"}
                     }, status=404)
-                    # item["description"] = "fecha ya pasada invalida"
-                #validar por carrito de compras
-            else:  # prod
-                item["description"] = obj.get("description", "")
 
-            quantity = int(item.get("quantity", 1))
-            unit_price = Decimal(str(obj.get("price", "0.0")))
-            price_total += unit_price * quantity
-            return None  # indica éxito
+                print("resave_total_price: ")
+                print(jsonCatalog)
+                
+                obj = AiContent.validation_for_name(title, jsonCatalog)
+                if not isinstance(obj, dict) or obj.get("type") != expected_type:
+                    return JsonResponse({
+                        "status": 404,
+                        "response": {"error": f"{expected_type} '{title}' no válido o no encontrado"}
+                    }, status=404)
 
-        # Procesar servicios
-        for service_item in payload.get("listServices", []):
-            err = validate_and_accumulate(service_item, "serv")
-            if isinstance(err, JsonResponse):
-                return err
+                # Normalizar campos
+                item["title"] = obj.get("name", title)
+                item["unit_price"] = obj.get("price", "0.0")
 
-        # Procesar productos
-        for product_item in payload.get("listProducts", []):
-            err = validate_and_accumulate(product_item, "prod")
-            if isinstance(err, JsonResponse):
-                return err
+                if expected_type == "serv":
+                    date_str = item.get("date", "")
+                    time_str = item.get("time", "")
+                    
+                    #validar fechas
+                    result = cls.verification_time_zone(date_str=date_str,default_year= default_year)
+                    if result.get("success"):
+                        print(result)
+                        item["description"] = f"fecha registrada: {date_str} - Hora: {time_str}"
+                    else:
+                        return JsonResponse({
+                            "status": 404,
+                            "response": {"error": f"Fecha pasada es invalida"}
+                        }, status=404)
+                        # item["description"] = "fecha ya pasada invalida"
+                    #validar por carrito de compras
+                else:  # prod
+                    item["description"] = obj.get("description", "")
 
-        payload["price_total"] = str(price_total)
-        return JsonResponse({"status": 200, "response": payload}, status=200)
-             
+                quantity = int(item.get("quantity", 1))
+                unit_price = Decimal(str(obj.get("price", "0.0")))
+                price_total += unit_price * quantity
+                return None  # indica éxito
+
+            # Procesar servicios
+            for service_item in payload.get("listServices", []):
+                err = validate_and_accumulate(service_item, "serv")
+                if isinstance(err, JsonResponse):
+                    return err
+
+            # Procesar productos
+            for product_item in payload.get("listProducts", []):
+                err = validate_and_accumulate(product_item, "prod")
+                if isinstance(err, JsonResponse):
+                    return err
+
+            payload["price_total"] = str(price_total)
+            return JsonResponse({"status": 200, "response": payload}, status=200)
+                
+        except Exception as e: 
+            return JsonResponse({"error": f"Ha ocurrido un error: {e}" },status=400)
+        
              
 
         # print("calMethod")
