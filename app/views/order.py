@@ -48,6 +48,22 @@ class OrderCanceledView(APIView):
         except Exception as e: 
             return JsonResponse({"error": str(e)}, status= status.HTTP_400_BAD_REQUEST)
 
+class OrderGetIdClientView(APIView):
+    def post(self,request):
+        try:
+            data = json.loads(request.body)
+            idClient = data.get("idClient")
+            idBusiness = data.get("idBusiness")
+            print(idClient)
+            
+            response = OrdersManager.get_list_orders_id_client_id_business(
+                id_client=str(idClient),
+                id_business=idBusiness)
+            return JsonResponse({"response":response})
+            # return JsonResponse({"a":"listo"})
+        except Exception as e:
+            return JsonResponse({"error":str(e)},status=400)   
+            
 class OrderGetList(APIView):
     def post(self,request):
         try:

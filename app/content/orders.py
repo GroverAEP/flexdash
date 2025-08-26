@@ -21,6 +21,41 @@ class OrdersManager:
         self.orders = {}  # key = order_id, value = dict con datos de la orden
         self.lock = Lock()
 
+    @classmethod
+    def get_list_orders_id_client_id_business(cls,id_client:str,id_business:str):
+        try:
+            list_orders_client = []
+
+            print(id_client)
+
+            # Obteniendo ordenes de la nube (MongoDB):
+            collection, conexion  = BDConnection.conexion_order_mongo()
+            list_orders_bd =  list(collection.find(
+                                    {"id_client": id_client,
+                                     "id_business": id_business,
+                                     "status":"pending"
+                                     },
+                                    
+                                    {"_id": 0}))
+
+            print(list_orders_bd)
+            
+            # Obteniendo ordenes de los objetos (Django ORM):
+            list_orders_objects = list(Order.objects.filter(
+                    id_client=uuid.UUID(id_client),
+                    status = "pending",
+                    id_business=uuid.UUID(id_business)).values())
+            print(list_orders_objects)
+
+            # Uniendo todas las ordenes:
+            list_orders_client = list_orders_bd + list_orders_objects
+                        
+            conexion.close()
+            return list_orders_client
+        except Exception as e :
+            return {
+                "status":400,
+                "error": str(e)}
 
     @classmethod
     def cancelled_order_process(cls,id_order:str,data:dict,reason:str):
@@ -236,33 +271,40 @@ class OrdersManager:
     def remove_order(self, order_id):
         """Elimina la orden de memoria y DB"""
         print(self.orders)
-        
-        result = Order.objects.filter(id=order_id).delete()
-        
-        if result :
+
+        # Eliminar de MongoDB
+        collection, conexion = BDConnection.conexion_order_mongo()
+        result_order_bd = collection.delete_one({"id": order_id})
+        deleted_mongo = result_order_bd.deleted_count > 0
+        conexion.close()
+
+        # Eliminar de Django ORM
+        deleted_sql_count, _ = Order.objects.filter(id=order_id).delete()
+        deleted_sql = deleted_sql_count > 0
+
+        if deleted_mongo or deleted_sql:
             return {
-                    "message": "Orden Eliminada",
-                    "status": True,
-                    "id": order_id,
-                    # "self": self.orders
-                }
-        
-        with self.lock:
-            if order_id in self.orders:
-                order_obj = self.orders[order_id]["obj"]  # instancia real
-                order_obj.delete()
-                del self.orders[order_id]
-                return {
-                    "message": "Orden Eliminada",
-                    "status": True,
-                    "id": order_id,
-                    "self": self.orders
-                }
-            return {
-                "message": "Orden no existe",
-                "status": False,
-                "id": order_id
+                "message": "Orden Eliminada",
+                "status": True,
+                "id": order_id,
             }
+
+        return {
+            "message": "Orden no existe",
+            "status": False,
+            "id": order_id
+        }
+        # with self.lock:
+        #     if order_id in self.orders:
+        #         order_obj = self.orders[order_id]["obj"]  # instancia real
+        #         order_obj.delete()
+        #         del self.orders[order_id]
+        #         return {
+        #             "message": "Orden Eliminada",
+        #             "status": True,
+        #             "id": order_id,
+        #             "self": self.orders
+        #         }
     
     @classmethod
     def get_list_orders_id(cls, idBusiness: str):

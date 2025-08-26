@@ -110,10 +110,10 @@ class BusinessManager():
             }
     
     @classmethod
-    def get_business_id(self, idBusiness):
+    def get_business_id(self, id_business):
         try:
             collection, conexion = BDConnection.conexion_business_mongo() 
-            doc = collection.find_one({"id":idBusiness,},{"_id": 0})
+            doc = collection.find_one({"id":id_business,},{"_id": 0})
             
             
             # Convierte datetimes a str automáticamente
@@ -133,7 +133,12 @@ class BusinessManager():
             return {
                 "Error": str(e),
             }
-            
+    
+                
+
+
+
+
 
     @classmethod
     def search_id_catalog(cls, id):

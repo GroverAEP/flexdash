@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.urls import path
 from app.views import views
-from app.views.order import OrderCreateAPIView,OrderCanceledView,OrderDashBoardView,OrderGetList
+from app.views.business import BusinessGetIdInfoView
+from app.views.order import OrderCreateAPIView,OrderCanceledView,OrderDashBoardView,OrderGetList,OrderGetIdClientView
 from app.views.dashboard import DashboardInfoTimeRealDay
 from app.views.payment import PaymentProcess , PaymentCancelled
 
@@ -94,6 +95,7 @@ urlpatterns = [
 
     path("create_order/",OrderCreateAPIView.as_view(), name="create_order"),
     path("remove_order/",OrderCanceledView.as_view(), name="remove_order"),
+    path('get_order_client/',OrderGetIdClientView.as_view(), name="get_order_client"),
     
     path("dashboard/orders/", OrderDashBoardView.as_view(),name="dashboard-orders"),
 
@@ -115,5 +117,14 @@ urlpatterns = [
     path("orders/metrics/stream_customers_month/<uuid:business_id>/", OrdersStreamTodayView.as_view(), name= "order-customers-month")    ,
 
     path("upload_orders/", views.upload_orders_view, name="upload_orders"),
+
+    
+    #obtener informacion de negocio
+    path("get_info_client/",BusinessGetIdInfoView.as_view(),name="get_info_client")
+   
     ]
+
+
+
+
 

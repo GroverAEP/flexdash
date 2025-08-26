@@ -320,7 +320,7 @@ def resave_item_order (request):
             print(response)
             
             return response
-        except json.JSONDecodeError:
+        except json.JSONDeRcodeError:
             return JsonResponse({'error': 'JSON inválido'}, status=400)
     else:
         return JsonResponse({'error': 'Método no permitido'}, status=405)

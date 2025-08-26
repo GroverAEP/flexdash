@@ -413,6 +413,10 @@ ScriptCards Peding Hoy
             <div class="ml-4 mt-1">
               ${order.carts.items.map(item => `
                 <p>- ${item.name} (x${item.quantity}) - S/.${item.price}</p>
+
+                ${item.description && item.description.trim() !== "" 
+                        ? `<h1>- ${description}</h1>` 
+                        : `<h1>"no existe"</h1>` }
               `).join("")}
             </div>
     
@@ -536,6 +540,10 @@ Script 3 - today_peding
             <div class="ml-4 mt-1">
               ${order.carts.items.map(item => `
               <p>- ${item.name} (x${item.quantity}) -  S/.${item.price}</p>
+
+            ${item.description && item.description.trim() !== "" 
+              ? `<p class="ml-6 text-sm text-gray-500">↳ ${item.description}</p>` 
+              : ""}
               `).join("")}
             </div>
             
