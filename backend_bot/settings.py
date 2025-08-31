@@ -39,6 +39,7 @@ ALLOWED_HOSTS = [
     'flexdash.onrender.com',  # Permite cualquier subdominio de Render
     'localhost',
     '127.0.0.1',
+    'vlexwaypage.onrender.com'
 ]
 
 
@@ -55,6 +56,9 @@ INSTALLED_APPS = [
     #app origin
     'app.apps.AppConfigApp',
     'rest_framework',
+    'rest_framework_simplejwt',
+    
+    "corsheaders",
     'frontend.apps.FrontendConfig',
         
 
@@ -69,6 +73,7 @@ LOGIN_URL = '/login/'
 
 MIDDLEWARE = [
 
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -79,13 +84,31 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'app.core.middleware.LoginRequiredMiddleware',
     'app.core.middleware.BusinessSessionMiddleware',
-    'app.core.middleware.ThreadLocalMiddleware'
+    'app.core.middleware.ThreadLocalMiddleware',
 ]
 
+
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ORIGIN_WHITELIST = ('http://localhost',"http://127.0.0.1:3000","https://vlexwaypage.onrender.com")
+CORS_ALLOW_ALL_ORIGINS = False  # más seguro
+SESSION_COOKIE_SAMESITE = None
+SESSION_COOKIE_SECURE = False   # 🚨 en desarrollo debe ser False porque no tienes HTTPS
+
+CSRF_COOKIE_SAMESITE = None
+CSRF_COOKIE_SECURE = False
+
 REST_FRAMEWORK = {
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ]
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',  # 👈 por defecto pide login
+    ],
 }
 
 ROOT_URLCONF = 'backend_bot.urls'
@@ -100,6 +123,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                "core.context_processors.user_session",  # 👈 tu processor
+
             ],
         },
     },
@@ -194,7 +219,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_COOKIE_NAME = "csrftoken"
 CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
-CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com',"http://localhost:3000", "https://tu-front.com","https://flexdash.onrender.com/"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://flexdash.onrender.com",
+    "https://vlexwaypage.onrender.com"
+    
+]
 CSRF_COOKIE_SECURE = False  # True si usas HTTPS
 CSRF_COOKIE_HTTPONLY = False
 

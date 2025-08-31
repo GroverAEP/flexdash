@@ -33,12 +33,18 @@ def crear_perfil_UserTest(sender, instance, created, **kwargs):
 @receiver(user_logged_in)
 def set_session_user(sender, request, user, **kwargs):
     # print()
+    
+    # request.session.flush()
+
     responseAdmin = AdminContent.get_user_id(id=str(request.user.profile.id_profile  ))
     responseBusiness = BusinessManager.get_list_business_id(idAdmin=str(request.user.profile.id_profile))
     print(responseBusiness)
     request.session["user"] = responseAdmin
     request.session["business"]= responseBusiness
-    print(request.session.get("user"))
+
+    request.session.modified = True
+    request.session.save()
+    # print(request.session.get("user"))
     print(request.session.get("business"))
     print("señal ejecutada _precargar_")
     

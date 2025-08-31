@@ -259,6 +259,9 @@ class OrdersStreamSafeView(View):
 
 
 class OrdersEarnMounthStreamView(View):
+    permission_classes = []  # 👈 así se hace en clase
+    authentication_classes = []
+    
     def get(self, request, business_id):
         response = StreamingHttpResponse(
             StreamOrder.stream_earn_month_orders(business_id=business_id),

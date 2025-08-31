@@ -6,22 +6,26 @@ from datetime import datetime
 from app.conexion import BDConnection
 from app.content.orders import OrdersManager
 from app.content.business import BusinessManager
+from app.content.admin import AdminContent
+from rest_framework_simplejwt.tokens import AccessToken
+from app.models import User  # importa tu modelo real
 
 class LoginRequiredMiddleware:
     """
-    Middleware que redirige a LOGIN_URL si el usuario no está autenticado,
-    excepto en rutas públicas definidas en `PUBLIC_PATHS`.
-
-    Durante desarrollo, también permite autenticación por Bearer Token estático.
+    Middleware para proteger rutas excepto las públicas.
+    Usa token Bearer estático para autenticación (solo desarrollo).
+    Devuelve 401 JSON en vez de redirigir para que el frontend maneje el login.
     """
-    # Token de prueba para desarrollo (en producción debe ser dinámico y con expiración)
+
     TOKEN_BEARER = "eXJ3bGciOiJIU2I1NiIsInR4cCI6Ik1XVCJ9.ey5h"
 
-    # Rutas que serán accesibles sin autenticación
     PUBLIC_PATHS = [
-        reverse('login'),      # vista de login
-        # reverse('register'),   # vista de registro
-        '/admin/login/',       # login del admin
+        '/api/public/',    # rutas públicas de API
+        # '/api/auth/login/',     # login en backend (si existiera)
+        # '/api/profile/',
+        '/api/dashboard/validate/',  
+        '/api/get_info_client/'     
+        # agrega otras rutas públicas que quieras permitir
     ]
 
     def __init__(self, get_response):
@@ -30,27 +34,63 @@ class LoginRequiredMiddleware:
     def __call__(self, request):
         path = request.path
         auth_header = request.headers.get("Authorization", "")
-      
-        # Ignorar todas las rutas que empiecen con /api/
-        if path.startswith("/api/"):
+        access_token = request.session.get("access-token")
+
+        request.session.get("access-token")
+        print(access_token)
+        print(request.headers.get("Authorization"))
+        
+        print("paso por midleware")
+        print(request.user)
+        
+        
+        # if request.user.is_authenticated:
+        #     print("autentificado")
+        #     return self.get_response(request)
+        # Si la ruta es pública, permite sin autenticación
+        if not any(path.startswith(p) for p in self.PUBLIC_PATHS):
+            print("asdsad")
             return self.get_response(request)
-        # Si el header empieza con "Bearer " y el token es correcto
+
+        # Verifica token Bearer
         if auth_header.startswith("Bearer "):
+            print("No")
             token = auth_header.split("Bearer ")[1]
             if token == self.TOKEN_BEARER:
+                # Aquí podrías asignar un user ficticio si quieres
+                return self.get_response(request)
+            else:
+                return JsonResponse({"error": "Token inválido"}, status=401)
+
+        #autentificacion por medio de inicio sesion en navegador
+        elif request.session.get("access-token"):
+            print("access-tok")
+            try:
+                print(access_token)
+                token = AccessToken(access_token)  # ✅ valida firma y expiración
+                user_id = token["user_id"]          # sacas el claim
+                user = User.objects.get(id=user_id)
+                request.user = user
+                
+                # responseAdmin = AdminContent.get_user_id(id=str(request.user.profile.id_profile  ))
+                # responseBusiness = BusinessManager.get_list_business_id(idAdmin=str(request.user.profile.id_profile))
+                # print(responseBusiness)
+                print("✅ Usuario autenticado:", user)
+                print("✅ Usuario request:", request.user)
+                print("usuario de administrador:" , request.session["user"]["full_name"])
+                # print("negocios del administrador:" ,responseBusiness)
+
                 return self.get_response(request)
             
-            # elif token is UserNormal
-            
-            else:
-                return JsonResponse({"error": "Bearer token inválido"}, status=401)
+            except Exception as e:
+                print("❌ Token de sesión inválido:", str(e))
+                return JsonResponse({"error": "Token de sesión inválido"}, status=401)
+        else:
+            print("paso aca")
+            # Si no hay token ni está autenticado, devuelve 401
+            if isinstance(request.user, AnonymousUser):
+                return JsonResponse({"error": "No autenticado"}, status=401)
 
-        # Si no es un usuario autenticado y no está en rutas públicas → redirigir
-        if isinstance(request.user, AnonymousUser) and path not in self.PUBLIC_PATHS:
-            return redirect(reverse('login'))
-
-        return self.get_response(request)
-    
 class BusinessSessionMiddleware:
     """
     Middleware para mantener business_id en sesión
@@ -70,6 +110,8 @@ class BusinessSessionMiddleware:
 
     def __call__(self, request):
         path = request.path
+        
+        print(request.session.get("access-token"))
         
           # Si ya existe en sesión, no hacemos nada
 

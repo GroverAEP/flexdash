@@ -3,13 +3,15 @@ from django.urls import path
 from app.views import views
 from app.views.business import BusinessGetIdInfoView
 from app.views.order import OrderCreateAPIView,OrderCanceledView,OrderDashBoardView,OrderGetList,OrderGetIdClientView
-from app.views.dashboard import DashboardInfoTimeRealDay
+from app.views.dashboard import DashboardInfoTimeRealDay , DashboardValidate
 from app.views.payment import PaymentProcess , PaymentCancelled
 
 from app.content.orders import OrdersManager
 
 #separo la vista en 2 
 from app.views.stream import OrdersStreamView, OrdersStreamSafeView,OrdersStreamTodayView,OrdersEarnMounthStreamView
+
+from app.views.login import LoginView, ProfileView,LogoutView
 
 #Admin
 #client
@@ -120,8 +122,17 @@ urlpatterns = [
 
     
     #obtener informacion de negocio
-    path("get_info_client/",BusinessGetIdInfoView.as_view(),name="get_info_client")
-   
+    path("get_info_client/",BusinessGetIdInfoView.as_view(),name="get_info_client"),   
+    
+    
+    
+    #logueao en backend
+    path("auth/login/",LoginView.as_view(),name="auth-login"),
+    path("auth/logout/",LogoutView.as_view(),name="auth-logout"),
+       path("profile/", ProfileView.as_view(), name="profile"),
+
+      path("dashboard/validate/",DashboardValidate.as_view(),name="dashboard-validate")
+
     ]
 
 

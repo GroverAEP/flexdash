@@ -9,6 +9,8 @@ from app.content.orders import OrdersManager,AnalyticsOrders
 from django.http import JsonResponse
 
 class OrderCreateAPIView(APIView):
+    permission_classes = []  # 👈 así se hace en clase
+    authentication_classes = []
     def post(self, request):
         try:
             info = json.loads(request.body)

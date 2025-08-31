@@ -31,7 +31,9 @@ urlpatterns = [
     
     ##test
     
-        path("incrementar/", views.incrementar_contador, name="incrementar"),
+    path("incrementar/", views.incrementar_contador, name="incrementar"),
+        
+    #
 
 ]
 

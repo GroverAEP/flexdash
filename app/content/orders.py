@@ -274,12 +274,12 @@ class OrdersManager:
 
         # Eliminar de MongoDB
         collection, conexion = BDConnection.conexion_order_mongo()
-        result_order_bd = collection.delete_one({"id": order_id})
+        result_order_bd = collection.delete_one({"id": order_id,"status":"pending"})
         deleted_mongo = result_order_bd.deleted_count > 0
         conexion.close()
 
         # Eliminar de Django ORM
-        deleted_sql_count, _ = Order.objects.filter(id=order_id).delete()
+        deleted_sql_count, _ = Order.objects.filter(id=order_id,status="pending").delete()
         deleted_sql = deleted_sql_count > 0
 
         if deleted_mongo or deleted_sql:
