@@ -23,6 +23,8 @@ class LoginRequiredMiddleware:
         '/api/public/',    # rutas públicas de API
         # '/api/auth/login/',     # login en backend (si existiera)
         # '/api/profile/',
+        '/api/validated/'
+        '/api/cancelled/'
         '/api/dashboard/validate/',  
         '/api/get_info_client/'     
         # agrega otras rutas públicas que quieras permitir

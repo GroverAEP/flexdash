@@ -378,7 +378,7 @@ def add_catalog(request):
                 },status=400
             )
     return JsonResponse({"status":400,"error":"Error dentro del codigo"},status=400)
-
+@csrf_exempt
 def upload_orders_view(request):
     OrdersManager.upload_orders()
     return JsonResponse({"status": "ok"})
@@ -389,6 +389,8 @@ def upload_orders_view(request):
 
 @csrf_exempt
 def add_client(request):
+    permission_classes = []  # 👈 así se hace en clase
+    authentication_classes = []
         #validacion errores
     if request.method == "POST":
         try:
@@ -502,8 +504,7 @@ def encode_image(filename):
 
 
 def create_order(add_order):
-    A
-
+  pass
 
 
 @csrf_exempt 

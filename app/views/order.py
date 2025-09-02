@@ -37,6 +37,8 @@ class OrderCreateAPIView(APIView):
             return JsonResponse({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class OrderCanceledView(APIView):
+    permission_classes = []  # 👈 así se hace en clase
+    authentication_classes = []
     def post(self,request):
         try:
             data = json.loads(request.body)
@@ -51,6 +53,8 @@ class OrderCanceledView(APIView):
             return JsonResponse({"error": str(e)}, status= status.HTTP_400_BAD_REQUEST)
 
 class OrderGetIdClientView(APIView):
+    permission_classes = []  # 👈 así se hace en clase
+    authentication_classes = []
     def post(self,request):
         try:
             data = json.loads(request.body)

@@ -10,9 +10,14 @@ from django.http import JsonResponse
 from django.shortcuts import redirect
 from app.conexion import BDConnection
 from django.utils import timezone
+from rest_framework.permissions import IsAuthenticated
 
 
 class PaymentProcess(APIView):
+    permission_classes = []  # 👈 así se hace en clase
+    authentication_classes = []
+    
+    
     
     def __init__(self):
         pass
@@ -44,6 +49,8 @@ class PaymentProcess(APIView):
     
 
 class PaymentCancelled(APIView):
+    permission_classes = []  # 👈 así se hace en clase
+    authentication_classes = []    
     def post(self,request):
             
         try:
